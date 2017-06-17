@@ -1,7 +1,7 @@
 {
-  "name": "express-es6-rest-api",
-  "version": "0.3.0",
-  "description": "Starter project for an ES6 RESTful Express API",
+  "name": "sunday-node",
+  "version": "0.1.0",
+  "description": "Node project for Sunday",
   "main": "dist",
   "scripts": {
     "dev": "nodemon -w src --exec \"babel-node src --presets es2015,stage-0\"",
@@ -24,8 +24,8 @@
       "no-unused-vars": 1
     }
   },
-  "repository": "developit/express-es6-rest-api",
-  "author": "Jason Miller <jason@developit.ca>",
+  "repository": "danieljvdm/sunday-node",
+  "author": "Daniel van der Merwe <danieljmerwe@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.13.3",
