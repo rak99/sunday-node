@@ -2,6 +2,8 @@ import MailListener from 'mail-listener2';
 import { simpleParser } from 'mailparser';
 import _ from 'lodash';
 
+import { createStory } from '../db';
+
 const mailListener = new MailListener({
   username: 'louis@sundaystori.es',
   password: 'sundaystories1989',
@@ -10,7 +12,7 @@ const mailListener = new MailListener({
   tls: true,
   connTimeout: 10000, // Default by node-imap
   authTimeout: 5000, // Default by node-imap,
-  debug: console.log, // Or your custom function with only one incoming argument. Default: null
+  debug: null, // Or your custom function with only one incoming argument. Default: null
   tlsOptions: { rejectUnauthorized: false },
   mailbox: 'INBOX', // mailbox to monitor
   searchFilter: ['UNSEEN'], // the search filter being used after an IDLE notification has been retrieved
@@ -34,11 +36,9 @@ const listener = {
     });
 
     mailListener.on('mail', (mail, seqno, attributes) => {
-      console.log('START EMAIL');
       const mailObject = _.pick(mail, ['text', 'subject', 'from']);
       mailObject.from = mailObject.from[0];
-      console.log(mailObject);
-      console.log('END EMAIL');
+      createStory(mailObject.text);
     });
 
     mailListener.on('error', (err) => {
