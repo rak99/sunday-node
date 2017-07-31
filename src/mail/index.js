@@ -1,6 +1,34 @@
 import MailListener from 'mail-listener2';
 import { simpleParser } from 'mailparser';
 import _ from 'lodash';
+import nodemailer from 'nodemailer';
+
+// create reusable transporter object using the default SMTP transport
+let transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // secure:true for port 465, secure:false for port 587
+    auth: {
+        user: 'louis@sundaystori.es',
+        pass: 'sundaystories1989'
+    }
+});
+
+function mailReply(mailObject) {
+  let mailOptions = {
+    from: '"Louis Barclay" <louis@sundaystori.es>', // sender address
+    to: mailObject.from.address, // list of receivers
+    subject: mailObject.subject, // Subject line
+    text: 'I really appreciate your fantastic input, thank you so much for emailing me', // plain text body
+    html: '<b><i>I really appreciate your fantastic input, thank you so much for emailing me</i></b>', // html body
+  };    
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+        return console.log(error);
+    }
+    console.log('Message %s sent: %s', info.messageId, info.response);
+  });
+}
 
 const mailListener = new MailListener({
   username: 'louis@sundaystori.es',
@@ -34,11 +62,19 @@ const listener = {
     });
 
     mailListener.on('mail', (mail, seqno, attributes) => {
+      simpleParser(mail.eml).then(mail=>{}).catch(err=>{});
       console.log('START EMAIL');
       const mailObject = _.pick(mail, ['text', 'subject', 'from']);
       mailObject.from = mailObject.from[0];
       console.log(mailObject);
       console.log('END EMAIL');
+      console.log(mail);
+      console.log("END FIRST EMAIL VERSION")
+      // const mailObject = _.pick(mail, ['text', 'subject', 'from']);
+      // mailObject.from = mailObject.from[0];
+      // mailReply(mailObject);
+      // console.log(mailObject);
+      // console.log('END EMAIL');
     });
 
     mailListener.on('error', (err) => {
