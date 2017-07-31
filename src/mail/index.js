@@ -2,6 +2,7 @@ import MailListener from 'mail-listener2';
 import { simpleParser } from 'mailparser';
 import _ from 'lodash';
 import nodemailer from 'nodemailer';
+import { createStory } from '../db/actions/story';
 
 // create reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
@@ -30,8 +31,6 @@ function mailReply(mailObject) {
     console.log('Message %s sent: %s', info.messageId, info.response);
   });
 }
-
-import { createStory } from '../db/actions/story';
 
 const mailListener = new MailListener({
   username: 'louis@sundaystori.es',
