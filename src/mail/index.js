@@ -2,7 +2,7 @@ import MailListener from 'mail-listener2';
 import { simpleParser } from 'mailparser';
 import _ from 'lodash';
 
-import { createStory } from '../db';
+import { createStory } from '../db/actions/story';
 
 const mailListener = new MailListener({
   username: 'louis@sundaystori.es',
