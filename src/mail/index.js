@@ -62,19 +62,11 @@ const listener = {
     });
 
     mailListener.on('mail', (mail, seqno, attributes) => {
-      simpleParser(mail.eml).then(mail=>{}).catch(err=>{});
       console.log('START EMAIL');
       const mailObject = _.pick(mail, ['text', 'subject', 'from']);
       mailObject.from = mailObject.from[0];
       console.log(mailObject);
-      console.log('END EMAIL');
-      console.log(mail);
-      console.log("END FIRST EMAIL VERSION")
-      // const mailObject = _.pick(mail, ['text', 'subject', 'from']);
-      // mailObject.from = mailObject.from[0];
-      // mailReply(mailObject);
-      // console.log(mailObject);
-      // console.log('END EMAIL');
+      console.log("END EMAIL")
     });
 
     mailListener.on('error', (err) => {
