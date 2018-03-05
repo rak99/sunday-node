@@ -1,0 +1,52 @@
+{
+  "html":
+    "<div dir=\"ltr\"><div class=\"gmail_default\" style=\"font-family:tahoma,sans-serif;font-size:small\">asdfasdfasdf</div></div>\n",
+  "text": "asdfasdfasdf\n",
+  "headers": {
+    "delivered-to": "louis@sundaystori.es",
+    "received": [
+      "by 10.236.141.129 with SMTP id d1csp685439pjo; Fri, 23 Feb 2018 05:06:58 -0800 (PST)",
+      "from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41]) by mx.google.com with SMTPS id 95sor960985uaz.173.2018.02.23.05.06.58 for <louis@sundaystori.es> (Google Transport Security); Fri, 23 Feb 2018 05:06:58 -0800 (PST)",
+      "by 10.31.10.8 with HTTP; Fri, 23 Feb 2018 05:06:57 -0800 (PST)"
+    ],
+    "x-received": [
+      "by 10.31.59.139 with SMTP id i133mr1066056vka.4.1519391218308; Fri, 23 Feb 2018 05:06:58 -0800 (PST)",
+      "by 10.159.41.194 with SMTP id s60mr1216258uas.126.1519391217616; Fri, 23 Feb 2018 05:06:57 -0800 (PST)"
+    ],
+    "arc-seal":
+      "i=1; a=rsa-sha256; t=1519391218; cv=none; d=google.com; s=arc-20160816; b=ZG7wPLK6hWs4Afp7GaHN6lBDzfdLD3OcUzKT7netS/xqrtMFmbTyMC3sZKbfgmhyu9 DAkCi8fNS1uN6XkwtKw65KdzWr5qBHbKg+aLDEDNBHX8aI9iBQvKzEbTIvdb9e1fEcxb Kfw21v4si6jlZEnUM6dH1ydFBijlON9efRlfqOKKqlXaRHsUDp+TnWX6BL4MjOnrt1dB w1QvDxIrh3UdanFMPfWcDFVwoYMvR7k+duiif9+87JJF9UjHQMsNQxbpFkO7ext5JwNG TgPJSHT0Y24sS6kiCNwMj8qlS236XvlwFcH2yhCs0DGP0gW0c7BxOhRxdFiWoy6pdAFE og6Q==",
+    "arc-message-signature":
+      "i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816; h=to:subject:message-id:date:from:mime-version:dkim-signature :arc-authentication-results; bh=xztChQwm25xDwKAoXGmA7UUjvOOjuCyfre66Dp72H0A=; b=VFaOyHYPd84N2kc1X63y/sETPQwYMZWY78ZKmjDQrcY1BpGl22ZyOf8tIapUQIx3X7 /ygDMIfW7mO2alWK44aFNr0Zzmw09Yzs5UXYMABX5LFsIupchd/4fTJt+W2O42ruA88x cQWV9BmdXZ8Sf14YMrHxqCsJ5IucwdqDuWE+/aBxyB/sNHFMEqI5m1QX+onXCgLax1/R QmMVstdC4vExcatopiCR9ZTf5FnzHos+ZP1jBTB6l9AcZ2hfs63mu+xz9DXuBKz31puN 5drUML1akdstZRbQIUkvEUYe/O19s6HNtPqoXCuTnJjrm9H2IxgiKqKN6hwUSzJ6bxKb 0ARg==",
+    "arc-authentication-results":
+      "i=1; mx.google.com; dkim=pass header.i=@gmail.com header.s=20161025 header.b=RarOKsqC; spf=pass (google.com: domain of louis.barclay@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=louis.barclay@gmail.com; dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com",
+    "return-path": "<louis.barclay@gmail.com>",
+    "received-spf":
+      "pass (google.com: domain of louis.barclay@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;",
+    "authentication-results":
+      "mx.google.com; dkim=pass header.i=@gmail.com header.s=20161025 header.b=RarOKsqC; spf=pass (google.com: domain of louis.barclay@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=louis.barclay@gmail.com; dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com",
+    "dkim-signature":
+      "v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20161025; h=mime-version:from:date:message-id:subject:to; bh=xztChQwm25xDwKAoXGmA7UUjvOOjuCyfre66Dp72H0A=; b=RarOKsqCv9WJa76fZwQhBpDWITG6y7jxfAg7WltlLZZBaCLHcg+ZRybwsRw8sY8m16 9ZeaZ8+tvaAuWOTM26Y+Blbuwiy9Z5fryN7/jM+57bYMg0Gft4ga8FJMFnEtImjmBz3i nG9RUm3ucsxmfkEvKNEWQGNLmB0iO52a27/50RAuDl/imjQS36HpkGQzmmH85TXQg1Co 11a5Wjkmb1xg51+d2h2jcmEVOr1TBbW7R7H+UDalYA5cIAA1Gsm+/4Fqo3x2/2JlRR4Y qv8YiJfYL0hbgirUMuBfKVWjNOkr8TtdbH2OPglMMzrLumJXMLOlYLkeFrcOC+19IVnc VZHA==",
+    "x-google-dkim-signature":
+      "v=1; a=rsa-sha256; c=relaxed/relaxed; d=1e100.net; s=20161025; h=x-gm-message-state:mime-version:from:date:message-id:subject:to; bh=xztChQwm25xDwKAoXGmA7UUjvOOjuCyfre66Dp72H0A=; b=jb9zvJUVL5yvWOp3naNatnJyZSn//Wz2v36ImEGrIBhrd394IDoI+vAqZsEX4YjkOT c3z/UJDRsFIVqeYDpl4TPd9ItzvReCueLMUQJOJGMpNNydFDQ6dniTHntpbkhafXQEP1 HEM7fILfSJZxlvtrPaULnIPcMuQnWHUDWP2nofwN1wGyGto15v42nmN6fsjjK/EgdXA9 jbc4X/z4VhhzjV8xs1JaJzo9vCLS+XUdIscKZzRhDzsTJxBbghOXARC3C9fiAD9P/xyP waplqSgM9tt7OcSYaYzLdHOND9Zt0+QEP0N2I5UZRpTQCQQ/+xmNM/QRhIO3tc/ncONv 6yuQ==",
+    "x-gm-message-state":
+      "APf1xPAcFrSKhbVtqmci/U/mXzoxDC+053ICDcmCEyQXF6L3hSrbMsVA 6MYcTo6t4nPiXfvs+PlX2I9pxJ/mtccnsysMUPhYzQ==",
+    "x-google-smtp-source":
+      "AG47ELuspuqpi9dAt2eT9mC3HY5YiSOGyNEeNr9YevACTYC0i7sWXKZq5nXyA5xYJisbUJKdLlNnYtD2KZz+9a3m0fg=",
+    "mime-version": "1.0",
+    "from": "Louis Barclay <louis.barclay@gmail.com>",
+    "date": "Fri, 23 Feb 2018 13:06:57 +0000",
+    "message-id": "<CAL2-1RYbdUg5hcHhe+1dHKWvxX9W1yR0y6B1S3enfvaPCsmjeA@mail.gmail.com>",
+    "subject": "asdfasdf",
+    "to": "Louis Barclay <louis@sundaystori.es>",
+    "content-type": "multipart/alternative; boundary=\"94eb2c05cf9ecd0c8a0565e0d51b\""
+  },
+  "subject": "asdfasdf",
+  "messageId": "CAL2-1RYbdUg5hcHhe+1dHKWvxX9W1yR0y6B1S3enfvaPCsmjeA@mail.gmail.com",
+  "priority": "normal",
+  "from": [{ "address": "louis.barclay@gmail.com", "name": "Louis Barclay" }],
+  "to": [{ "address": "louis@sundaystori.es", "name": "Louis Barclay" }],
+  "date": "2018-02-23T13:06:57.000Z",
+  "receivedDate": "2018-02-23T13:06:58.000Z",
+  "eml":
+    "Delivered-To: louis@sundaystori.es\r\nReceived: by 10.236.141.129 with SMTP id d1csp685439pjo;\r\n        Fri, 23 Feb 2018 05:06:58 -0800 (PST)\r\nX-Received: by 10.31.59.139 with SMTP id i133mr1066056vka.4.1519391218308;\r\n        Fri, 23 Feb 2018 05:06:58 -0800 (PST)\r\nARC-Seal: i=1; a=rsa-sha256; t=1519391218; cv=none;\r\n        d=google.com; s=arc-20160816;\r\n        b=ZG7wPLK6hWs4Afp7GaHN6lBDzfdLD3OcUzKT7netS/xqrtMFmbTyMC3sZKbfgmhyu9\r\n         DAkCi8fNS1uN6XkwtKw65KdzWr5qBHbKg+aLDEDNBHX8aI9iBQvKzEbTIvdb9e1fEcxb\r\n         Kfw21v4si6jlZEnUM6dH1ydFBijlON9efRlfqOKKqlXaRHsUDp+TnWX6BL4MjOnrt1dB\r\n         w1QvDxIrh3UdanFMPfWcDFVwoYMvR7k+duiif9+87JJF9UjHQMsNQxbpFkO7ext5JwNG\r\n         TgPJSHT0Y24sS6kiCNwMj8qlS236XvlwFcH2yhCs0DGP0gW0c7BxOhRxdFiWoy6pdAFE\r\n         og6Q==\r\nARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;\r\n        h=to:subject:message-id:date:from:mime-version:dkim-signature\r\n         :arc-authentication-results;\r\n        bh=xztChQwm25xDwKAoXGmA7UUjvOOjuCyfre66Dp72H0A=;\r\n        b=VFaOyHYPd84N2kc1X63y/sETPQwYMZWY78ZKmjDQrcY1BpGl22ZyOf8tIapUQIx3X7\r\n         /ygDMIfW7mO2alWK44aFNr0Zzmw09Yzs5UXYMABX5LFsIupchd/4fTJt+W2O42ruA88x\r\n         cQWV9BmdXZ8Sf14YMrHxqCsJ5IucwdqDuWE+/aBxyB/sNHFMEqI5m1QX+onXCgLax1/R\r\n         QmMVstdC4vExcatopiCR9ZTf5FnzHos+ZP1jBTB6l9AcZ2hfs63mu+xz9DXuBKz31puN\r\n         5drUML1akdstZRbQIUkvEUYe/O19s6HNtPqoXCuTnJjrm9H2IxgiKqKN6hwUSzJ6bxKb\r\n         0ARg==\r\nARC-Authentication-Results: i=1; mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20161025 header.b=RarOKsqC;\r\n       spf=pass (google.com: domain of louis.barclay@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=louis.barclay@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com\r\nReturn-Path: <louis.barclay@gmail.com>\r\nReceived: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])\r\n        by mx.google.com with SMTPS id 95sor960985uaz.173.2018.02.23.05.06.58\r\n        for <louis@sundaystori.es>\r\n        (Google Transport Security);\r\n        Fri, 23 Feb 2018 05:06:58 -0800 (PST)\r\nReceived-SPF: pass (google.com: domain of louis.barclay@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;\r\nAuthentication-Results: mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20161025 header.b=RarOKsqC;\r\n       spf=pass (google.com: domain of louis.barclay@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=louis.barclay@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com\r\nDKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=gmail.com; s=20161025;\r\n        h=mime-version:from:date:message-id:subject:to;\r\n        bh=xztChQwm25xDwKAoXGmA7UUjvOOjuCyfre66Dp72H0A=;\r\n        b=RarOKsqCv9WJa76fZwQhBpDWITG6y7jxfAg7WltlLZZBaCLHcg+ZRybwsRw8sY8m16\r\n         9ZeaZ8+tvaAuWOTM26Y+Blbuwiy9Z5fryN7/jM+57bYMg0Gft4ga8FJMFnEtImjmBz3i\r\n         nG9RUm3ucsxmfkEvKNEWQGNLmB0iO52a27/50RAuDl/imjQS36HpkGQzmmH85TXQg1Co\r\n         11a5Wjkmb1xg51+d2h2jcmEVOr1TBbW7R7H+UDalYA5cIAA1Gsm+/4Fqo3x2/2JlRR4Y\r\n         qv8YiJfYL0hbgirUMuBfKVWjNOkr8TtdbH2OPglMMzrLumJXMLOlYLkeFrcOC+19IVnc\r\n         VZHA==\r\nX-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=1e100.net; s=20161025;\r\n        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;\r\n        bh=xztChQwm25xDwKAoXGmA7UUjvOOjuCyfre66Dp72H0A=;\r\n        b=jb9zvJUVL5yvWOp3naNatnJyZSn//Wz2v36ImEGrIBhrd394IDoI+vAqZsEX4YjkOT\r\n         c3z/UJDRsFIVqeYDpl4TPd9ItzvReCueLMUQJOJGMpNNydFDQ6dniTHntpbkhafXQEP1\r\n         HEM7fILfSJZxlvtrPaULnIPcMuQnWHUDWP2nofwN1wGyGto15v42nmN6fsjjK/EgdXA9\r\n         jbc4X/z4VhhzjV8xs1JaJzo9vCLS+XUdIscKZzRhDzsTJxBbghOXARC3C9fiAD9P/xyP\r\n         waplqSgM9tt7OcSYaYzLdHOND9Zt0+QEP0N2I5UZRpTQCQQ/+xmNM/QRhIO3tc/ncONv\r\n         6yuQ==\r\nX-Gm-Message-State: APf1xPAcFrSKhbVtqmci/U/mXzoxDC+053ICDcmCEyQXF6L3hSrbMsVA\r\n\t6MYcTo6t4nPiXfvs+PlX2I9pxJ/mtccnsysMUPhYzQ==\r\nX-Google-Smtp-Source: AG47ELuspuqpi9dAt2eT9mC3HY5YiSOGyNEeNr9YevACTYC0i7sWXKZq5nXyA5xYJisbUJKdLlNnYtD2KZz+9a3m0fg=\r\nX-Received: by 10.159.41.194 with SMTP id s60mr1216258uas.126.1519391217616;\r\n Fri, 23 Feb 2018 05:06:57 -0800 (PST)\r\nMIME-Version: 1.0\r\nReceived: by 10.31.10.8 with HTTP; Fri, 23 Feb 2018 05:06:57 -0800 (PST)\r\nFrom: Louis Barclay <louis.barclay@gmail.com>\r\nDate: Fri, 23 Feb 2018 13:06:57 +0000\r\nMessage-ID: <CAL2-1RYbdUg5hcHhe+1dHKWvxX9W1yR0y6B1S3enfvaPCsmjeA@mail.gmail.com>\r\nSubject: asdfasdf\r\nTo: Louis Barclay <louis@sundaystori.es>\r\nContent-Type: multipart/alternative; boundary=\"94eb2c05cf9ecd0c8a0565e0d51b\"\r\n\r\n--94eb2c05cf9ecd0c8a0565e0d51b\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nasdfasdfasdf\r\n\r\n--94eb2c05cf9ecd0c8a0565e0d51b\r\nContent-Type: text/html; charset=\"UTF-8\"\r\n\r\n<div dir=\"ltr\"><div class=\"gmail_default\" style=\"font-family:tahoma,sans-serif;font-size:small\">asdfasdfasdf</div></div>\r\n\r\n--94eb2c05cf9ecd0c8a0565e0d51b--\r\n"
+}

@@ -4,8 +4,9 @@
   "description": "Node project for Sunday",
   "main": "dist",
   "scripts": {
-    "dev": "nodemon -w src --exec \"babel-node src --presets es2015,stage-0\"",
+    "dev": "pug nodemon -w src --exec \"babel-node src --presets es2015,stage-0\"",
     "build": "babel src -s -D -d dist --presets es2015,stage-0",
+    "pug": "pug -w src/mail/templates -o dist/mail/templates",
     "start": "node dist",
     "prestart": "npm run -s build",
     "test": "eslint src"
@@ -13,7 +14,7 @@
   "eslintConfig": {
     "extends": "airbnb",
     "parserOptions": {
-      "ecmaVersion": 7,
+      "ecmaVersion": 2017,
       "sourceType": "module"
     },
     "env": {
@@ -33,16 +34,21 @@
   "author": "Daniel van der Merwe <danieljmerwe@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "aws-sdk": "^2.116.0",
     "body-parser": "^1.13.3",
     "compression": "^1.5.2",
     "cors": "^2.7.1",
     "express": "^4.13.3",
+    "image-size": "^0.6.1",
     "lodash": "^4.17.4",
     "mail-listener2": "^0.3.1",
     "mailparser": "^2.0.5",
     "mongoose": "^4.10.6",
     "morgan": "^1.8.0",
-    "resource-router-middleware": "^0.6.0"
+    "nodemailer": "^4.0.1",
+    "parse-reply": "^0.0.4",
+    "resource-router-middleware": "^0.6.0",
+    "s3": "^4.4.0"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",
