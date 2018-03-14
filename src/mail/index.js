@@ -7,6 +7,9 @@ import { deleteUserData } from '../db/actions/user';
 import { searchName, searchEmails, firstNameVariants, lastNameVariants } from '../mail/utils';
 import sizeOf from 'image-size';
 import uploadAttachment from '../mail/attachments';
+import { sendMail } from '../mail/send';
+
+// sendMail('mars', 'louis.barclay@gmail.com', locals, inReplyTo, optionalSubject);
 
 // For testing
 deleteUserData();
@@ -51,48 +54,55 @@ const mailListener = new MailListener({
 async function processMail(mail) {
   try {
     const email = mail.from[0].address;
+    console.log(email);
     // Look up user record from email
     const findUser = await User.findOne({ email }, 'email firstName receiveFromIds');
     // If user has email. if user has first name. if email has specific command.
     // if email has attachment. if there is a story already for that user this week
     //
+    console.log(findUser);
     if (findUser) {
       const text = parseReply(mail.text); // Should use talon instead
       console.log(`Email text: \n${text}`);
-      // If there is no firstName, ask for more info
+      // If there is no firstName and user is not a referred user, ask for more info
+      // TODO: fix referredBy property
       if (_.isUndefined(findUser.firstName)) {
-        console.log('User has no first name');
+        // See if it's a user wanting to be taken out from another's distribution
+        if (text.includes('TAKEMEOUT')) {
+          // Reply confirming
+          // TODO: this
+          // Send email to their referrer saying no thank you
+          return;
+        }
+
         // Check the email to see if it's been provided
         const firstName = searchName(text, firstNameVariants);
         const lastName = searchName(text, lastNameVariants);
         const emails = searchEmails(text);
-        console.log(firstName);
-        console.log(lastName);
-        console.log(emails);
+
         if (!firstName && !lastName && !emails) {
-          // No info has been provided
           // Sorry, we need info to proceed
+          sendMail('on_noinfo', email, {}, mail.messageId, mail.subject);
           console.log('No info has been provided');
         } else {
-          console.log('User exists without first name etc.');
-          // Update first name and last name
+          // We got the info, so we update it
           const update = await User.update({ email }, { firstName, lastName }, { multi: true });
           console.log(update);
           // Check if users exist
           await Promise.all(
-            emails.map(async referredEmail => {
+            emails.map(async (referredEmail) => {
               // Method from here https://stackoverflow.com/questions/37576685/using-async-await-with-a-foreach-loop
               const findReferredUser = await User.findOne(
                 { email: referredEmail },
                 'email firstName',
               );
-              console.log(findReferredUser);
               if (findReferredUser) {
-                console.log(`${referredEmail} already exists`);
+                console.log(`${referredEmail} already exists - will send on_receivefriendrequest`);
                 // Add to receiveFromIds
                 // Send email saying 'X has added you. If not cool, let us know'
+                sendMail('on_receivefriendrequest', referredEmail, { firstName, lastName, email });
               } else {
-                console.log(`${referredEmail} does not exist so will create`);
+                console.log(`${referredEmail} does not exist so will create and send on_invite`);
                 const newUser = new User({
                   email: referredEmail,
                   timeCreated: _.now(),
@@ -100,13 +110,14 @@ async function processMail(mail) {
                 }); // Change to moment.js
                 const saveConfirm = await newUser.save();
                 console.log(saveConfirm);
+                sendMail('on_invite', referredEmail, { firstName, lastName, email });
                 // Send them an email saying hey:
                 // You will receive from X
                 // If you don't want to, you can unsub from THEM
                 // If you don't want Sunday EVER, you can delete yourself forever
-                // If you want to send stories yourself, 
+                // If you want to send stories yourself,
                 // Give us emails (all of them - including of person who invited you)
-                // 
+                //
               }
               // Check if users exist
               // Send an email to say 'hey, someone new wants to send you stories'?
@@ -119,8 +130,18 @@ async function processMail(mail) {
         // User is properly registered
         console.log(`${email}, registered user, sent an email`);
         // Check for a command
-        if (text.includes('delete image')) {
-          console.log('delete the image');
+        if (text.includes('DELETE')) {
+          // Reply confirming
+          // Send email to the recipient confirming
+          return;
+        }
+        if (text.includes('REMOVEIMAGE')) {
+          // Reply confirming
+          return;
+        }
+        if (text.includes('QUESTION')) {
+          // Forward it to my personal inbox
+          return;
         }
 
         // No command so assume it's a story
@@ -143,25 +164,29 @@ async function processMail(mail) {
             }
           }
         }
-        // If there is a firstName,
-        // Search text for commands
+        if (text.includes('STOP')) {
+          // Forward it to my personal inbox
+          return;
+        }
+
         // Or if no commands, log a story and reply saying story created
         // If that's not what you wanted, let us know
       }
     } else {
-      console.log(`${email} not found so will create`);
+      console.log(`${email} not found so will create, and send on_signup`);
+      sendMail('on_signup', email, {}, mail.messageId, mail.subject);
       // Create user
       const newUser = new User({ email, timeCreated: _.now(), referredBy: 'direct' }); // Change to moment.js
       const saveConfirm = await newUser.save();
       console.log(saveConfirm);
+      // Send email asking to sign up
     }
-    // handlemail comes next
   } catch (e) {
     console.log(e);
   }
 }
 
-processMail(email1);
+// processMail(email1);
 // processMail(email2);
 
 const listener = {
@@ -178,17 +203,17 @@ const listener = {
 
     mailListener.on('mail', (mail, seqno, attributes) => {
       processMail(mail);
-      fs.writeFile(`./src/mail/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', err => {
-        if (err) console.log(err);
-        else console.log('File saved');
-      });
+      // fs.writeFile(`./src/mail/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', err => {
+      //   if (err) console.log(err);
+      //   else console.log('File saved');
+      // });
     });
 
-    mailListener.on('attachment', attachment => {
+    mailListener.on('attachment', (attachment) => {
       // uploadAttachment(attachment.stream);
     });
 
-    mailListener.on('error', err => {
+    mailListener.on('error', (err) => {
       console.log(err);
     });
   },

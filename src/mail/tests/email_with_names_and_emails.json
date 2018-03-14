@@ -44,7 +44,7 @@
   "subject": "email_with_names_and_emails",
   "messageId": "CAL2-1RYh_wjq=LCT9sjq8JPtNY1z0ak-_fA2XJSJmqpb5FBLUg@mail.gmail.com",
   "priority": "normal",
-  "from": [{ "address": "louis.happy@gmail.com", "name": "Louis Barclay" }],
+  "from": [{ "address": "louis.barclay@gmail.com", "name": "Louis Barclay" }],
   "to": [{ "address": "louis@sundaystori.es", "name": "Louis Barclay" }],
   "date": "2018-02-23T14:59:14.000Z",
   "receivedDate": "2018-02-23T14:59:16.000Z",

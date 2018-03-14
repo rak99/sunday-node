@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
+import Email from 'email-templates';
 
-// Create reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
@@ -11,18 +11,28 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-function mailSend(email, subject, text, html) {
-  const mailOptions = {
-    from: '"Sunday Stories" <louis@sundaystori.es>', // sender address
-    to: email,
-    subject,
-    text,
-    html,
-  };
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      return console.log(error);
-    }
-    console.log('Message %s sent: %s', info.messageId, info.response);
+export const sendMail = (template, to, locals, inReplyTo, subject) => {
+  // Create reusable transporter object using the default SMTP transport
+  const email = new Email({
+    message: {
+      from: '"Sunday Stories" <louis@sundaystori.es>',
+    },
+    send: true,
+    transport: transporter,
+    preview: false,
   });
-}
+
+  email
+    .send({
+      template,
+      message: {
+        to,
+        subject,
+        inReplyTo,
+        references: [inReplyTo],
+      },
+      locals,
+    })
+    .then(console.log)
+    .catch(console.error);
+};
