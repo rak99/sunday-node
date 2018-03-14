@@ -19,7 +19,7 @@ export const sendMail = (template, to, locals, inReplyTo, subject) => {
     },
     send: true,
     transport: transporter,
-    preview: false,
+    preview: true,
   });
 
   email

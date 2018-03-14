@@ -2,14 +2,18 @@ import MailListener from 'mail-listener2';
 import _ from 'lodash';
 import fs from 'fs';
 import parseReply from 'parse-reply';
+import moment from 'moment';
+import sizeOf from 'image-size';
+
 import User from '../db/models/user';
 import { deleteUserData } from '../db/actions/user';
 import { searchName, searchEmails, firstNameVariants, lastNameVariants } from '../mail/utils';
-import sizeOf from 'image-size';
 import uploadAttachment from '../mail/attachments';
 import { sendMail } from '../mail/send';
 
 // sendMail('mars', 'louis.barclay@gmail.com', locals, inReplyTo, optionalSubject);
+
+sendMail('on_sunday', 'louis.barclay@gmail.com', { names: 'Julie, Tim and Banjo', stories: [['This is a beautiful Mongolian landscape', 'http://www.toursmongolia.com/uploads/Mongolia_landscape_Photography_by_Bayar.jpg'], ['Here is Japan', 'https://www.kanpai-japan.com/sites/default/files/uploads/2012/08/kurama-4.jpg']] });
 
 // For testing
 deleteUserData();
@@ -33,7 +37,7 @@ const mailListener = new MailListener({
   mailbox: 'INBOX', // mailbox to monitor
   searchFilter: ['UNSEEN'], // the search filter being used after an IDLE notification has been retrieved
   markSeen: true, // all fetched email willbe marked as seen and not fetched next time
-  fetchUnreadOnStart: true, // use it only if you want to get all unread email on lib start. Default is `false`,
+  fetchUnreadOnStart: true, // use it only if you want to get all unread email on lib start
   mailParserOptions: { streamAttachments: false }, // options to be passed to mailParser lib.
   attachments: true, // download attachments as they are encountered to the project directory
   attachmentOptions: { directory: 'attachments/' }, // specify a download directory for attachments
@@ -45,11 +49,6 @@ const mailListener = new MailListener({
 // https://s3-eu-west-1.amazonaws.com/sundaystories/testfile
 // how does email work. if you don't attach - just link - will that image disappear after?
 // how does mailSender work. can you attach? how does that all go down?
-
-// emailHasUser(test1, handleMail);
-// setTimeout(() => {
-//   emailHasUser(test2, handleMail);
-// }, 3000);
 
 async function processMail(mail) {
   try {
@@ -105,24 +104,13 @@ async function processMail(mail) {
                 console.log(`${referredEmail} does not exist so will create and send on_invite`);
                 const newUser = new User({
                   email: referredEmail,
-                  timeCreated: _.now(),
+                  timeCreated: moment().toString(),
                   referredBy: email,
                 }); // Change to moment.js
                 const saveConfirm = await newUser.save();
                 console.log(saveConfirm);
                 sendMail('on_invite', referredEmail, { firstName, lastName, email });
-                // Send them an email saying hey:
-                // You will receive from X
-                // If you don't want to, you can unsub from THEM
-                // If you don't want Sunday EVER, you can delete yourself forever
-                // If you want to send stories yourself,
-                // Give us emails (all of them - including of person who invited you)
-                //
               }
-              // Check if users exist
-              // Send an email to say 'hey, someone new wants to send you stories'?
-              // Create referred user
-              // Send each an email asking them if they want to sign up
             }),
           );
         }
@@ -174,10 +162,11 @@ async function processMail(mail) {
       }
     } else {
       console.log(`${email} not found so will create, and send on_signup`);
-      sendMail('on_signup', email, {}, mail.messageId, mail.subject);
       // Create user
-      const newUser = new User({ email, timeCreated: _.now(), referredBy: 'direct' }); // Change to moment.js
+      const newUser = new User({ email, timeCreated: moment().toString(), referredBy: email }); // Change to moment.js
       const saveConfirm = await newUser.save();
+      // Send an invite email
+      sendMail('on_signup', email, {}, mail.messageId, mail.subject);
       console.log(saveConfirm);
       // Send email asking to sign up
     }
