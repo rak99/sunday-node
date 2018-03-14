@@ -13,13 +13,14 @@
   "eslintConfig": {
     "extends": "airbnb",
     "parserOptions": {
-      "ecmaVersion": 7,
+      "ecmaVersion": 2017,
       "sourceType": "module"
     },
     "env": {
       "node": true
     },
     "rules": {
+      "linebreak-style": 0,
       "no-console": 0,
       "no-unused-vars": 1,
       "indent": [
@@ -33,16 +34,21 @@
   "author": "Daniel van der Merwe <danieljmerwe@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "aws-sdk": "^2.116.0",
     "body-parser": "^1.13.3",
     "compression": "^1.5.2",
     "cors": "^2.7.1",
+    "email-templates": "^3.5.0",
     "express": "^4.13.3",
+    "image-size": "^0.6.1",
     "lodash": "^4.17.4",
     "mail-listener2": "^0.3.1",
     "mailparser": "^2.0.5",
     "mongoose": "^4.10.6",
     "morgan": "^1.8.0",
     "nodemailer": "^4.0.1",
+    "parse-reply": "^0.0.4",
+    "pug": "^2.0.1",
     "resource-router-middleware": "^0.6.0",
     "s3": "^4.4.0"
   },
