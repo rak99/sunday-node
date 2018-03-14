@@ -1,0 +1,35 @@
+include top
+
+//- Text area
+mixin textArea(text)
+  table(width='100%', border='0', cellpadding='0', cellspacing='0', bgcolor='#ffffff')
+    tr
+      td(align='center', valign='top')
+        table.wrapto100pc(width='660', border='0', cellspacing='0', cellpadding='0')
+          tr
+            td(align='center', valign='top')
+              table(width='100%', border='0', cellpadding='0', cellspacing='0', bgcolor='#ffffff')
+                tr
+                  td(align='center', valign='top', style='padding:0px 10px 10px 10px;')
+                    table.wrapto100pc(width='600', border='0', cellspacing='0', cellpadding='0')
+                      tr
+                        td(align='left', valign='top', style='padding:10px 0px 0px 0px; color:#000000; font-size:16px; line-height:25px; font-family: courier, monospace, sans-serif;')
+                          =text
+
+//- Image
+mixin image(url)
+  table(width='100%', border='0', cellpadding='0', cellspacing='0', bgcolor='#ffffff')
+    tr
+      td(align='center', valign='top')
+        table.wrapto100pc(width='660', border='0', cellspacing='0', cellpadding='0')
+          tr
+            td(align='center', valign='top')
+              table(width='100%', border='0', cellpadding='0', cellspacing='0')
+                tr
+                  td(align='center', valign='top')
+                    a(href='')
+                      img.wrapto100pc(src=url, width='660', alt='', style='display:block')
+
+each val in stories
+  +textArea(val[0])
+  +image(val[1])
