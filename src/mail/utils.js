@@ -1,3 +1,5 @@
+import { cmd } from '../mail/commands';
+
 export const searchName = (emailText, nameVariants) => {
   for (let i = 0; i < nameVariants.length; i += 1) {
     let index = emailText.toLowerCase().indexOf(nameVariants[i].toLowerCase());
@@ -19,15 +21,48 @@ export const searchName = (emailText, nameVariants) => {
   return false;
 };
 
+const testAddAndRemove = `
+  ADDREADER
+  
+  james@happy.com
+
+  REMOVEREADER
+  hippy@seller.com
+
+  REMOVEREADER
+   wack@seller.com
+  louis.barclay@gmail.com
+`;
+
+const emailRegex = /([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
+const emailAddRegex = new RegExp(`(${cmd.addFriend}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`, 'gi');
+const emailRemoveRegex = new RegExp(`(${cmd.deleteFriend}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`, 'gi');
+
+export const searchAddAndRemove = (emailText) => {
+  const addEmails = [];
+  const removeEmails = [];
+  function findEmails(emailsArray, regexOption) {
+    if (emailText.match(regexOption) !== null) {
+      emailText.match(regexOption).forEach((item) => {
+        emailsArray.push(item.match(emailRegex)[0]);
+      });
+    }
+  }
+  findEmails(removeEmails, emailRemoveRegex);
+  findEmails(addEmails, emailAddRegex);
+  return {
+    removeEmails,
+    addEmails,
+  };
+};
+
+searchAddAndRemove(testAddAndRemove);
+
 export const searchEmails = (emailText) => {
-  const emails = emailText.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
+  const emails = emailText.match(emailRegex);
   console.log(emails);
   return emails;
 };
-
-const testIt = `ok ok ok\n\nfirst name: Lugikus\nlast name: Bagikus\n\nemails:\nlouisbarclay@gmail.com\nlouis@nudgeware.io\n\n\n\nOn Wed, Sep 13, 2017 at 3:26 PM, Sunday Stories <louis@sundaystori.es>\nwrote:\n\n> Hey! We\'ve set up your account now with that email address, but we need a\n> bit more info still. Can you please reply with your first name,
-  last name,\n> and emails you\'d like to send Sunday stories to? Write us in this sort of\n> format (copy, paste and change this if you like): First name: Barack Last\n> name
-  : Obama Emails to send to: miche@obama.com hillary@clinton.com\n> donald@trump.com Put as many emails as you like. Thanks! Sunday\n`;
 
 export const firstNameVariants = [
   'first name',
@@ -54,3 +89,32 @@ export const lastNameVariants = [
   'lasname',
   'lastname',
 ];
+
+const testStory = `
+This line.
+
+\n
+\n
+\f
+\t\t\t\t
+
+That line.    
+STORYEND
+`;
+
+export const prettifyStory = (emailText) => {
+  if (emailText.includes('STORYEND')) {
+    emailText = emailText.substr(0, emailText.indexOf('STORYEND'));
+  }
+  emailText = emailText.trim();
+  // Replace assorted line breaks with new lines
+  emailText = emailText.replace(/\r+|\f+/g, '\n');
+  // Replace multiple new lines with 1 new line
+  emailText = emailText.replace(/\n+/g, '\n');
+  // Replace tabs with spaces
+  emailText = emailText.replace(/\t+/g, ' ');
+  // Replace multiple spaces with 1 space
+  emailText = emailText.replace(/' '+/g, ' ');
+};
+
+prettifyStory(testStory);

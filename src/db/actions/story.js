@@ -1,9 +1,10 @@
 /* eslint-disable import/prefer-default-export */
 
+import moment from 'moment';
 import Story from '../models/story';
 
 export const createStory = (text, imageUrl) => {
-  const story = new Story({ text, imageUrl });
+  const story = new Story({ text, imageUrl, timeCreated: moment().format() });
   story.save((err) => {
     if (err) console.log(err);
   });
