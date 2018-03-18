@@ -10,6 +10,7 @@ import crypto from 'crypto';
 
 import User from '../db/models/user';
 import Story from '../db/models/story';
+import { cmd } from '../mail/commands';
 import { createStory } from '../db/actions/story';
 import { deleteUserData } from '../db/actions/user';
 import {
@@ -18,6 +19,7 @@ import {
   firstNameVariants,
   lastNameVariants,
   prettifyStory,
+  searchAddAndRemove,
 } from '../mail/utils';
 import uploadAttachment from '../mail/attachments';
 import { sendMail } from '../mail/send';
@@ -82,9 +84,8 @@ const mailListener = new MailListener({
 
 const imgMsgs = {
   noImg:
-    "We didn't find any attached image large enough to include in your story. If you want to include an image, attach an image larger than 660 pixels width, and write UPDATEIMAGE.",
-  oneImg:
-    'We found an image with your story and have included it below. If this is the wrong image, reply to this email with UPDATEIMAGE in your reply, and attach the right image (with no other images).',
+    "We didn't find any attached image large enough to include in your story. If you want to include an image, reply to this email including the original story, and with an image attached which is at least 660 pixels wide.",
+  oneImg: 'We found an image with your story and have included it below. If this is the wrong image, reply to this email with your original story in the reply and the new image attached. If you decide you no longer want an image, simply reply to this email with your original story only, and no image.',
 };
 
 async function processMail(mail) {
@@ -92,14 +93,22 @@ async function processMail(mail) {
     const email = mail.from[0].address;
 
     // Look up user record from email
-    const findUser = await User.findOne({ email }, 'email firstName _id receiveFromIds');
+    const findUser = await User.findOne(
+      { email },
+      'email firstName _id receiveFromIds currentStoryId',
+    );
     console.log(findUser);
     if (!findUser) {
       // If user doesn't exist
       console.log(`${email} not found so will create, and send on_signup`);
 
       // Create user
-      const newUser = new User({ email, timeCreated: moment().toString(), referredBy: email });
+      const newUser = new User({
+        email,
+        timeCreated: moment().format(),
+        referredBy: 'direct',
+        currentStoryId: false,
+      });
       const saveConfirm = await newUser.save();
 
       // Send on_signup email asking them for further details
@@ -111,6 +120,9 @@ async function processMail(mail) {
       // Define the user ID
       const id = findUser._id;
 
+      // Define current story id
+      const currentStoryId = findUser._id;
+
       // Parse the reply
       const reply = parseReply(mail.text);
       const text = parseWithTalon(reply).text; // Should use talon instead
@@ -121,7 +133,7 @@ async function processMail(mail) {
       // TODO: fix referredBy property
       // If there is no firstName and user is not a referred user, ask for more info
       if (_.isUndefined(findUser.firstName)) {
-        if (text.includes('TAKEMEOUT')) {
+        if (text.includes(cmd.rejectFriendRequest)) {
           // See if it's a user wanting to be taken out from another's distribution
           // Reply confirming
           // TODO: this
@@ -145,36 +157,47 @@ async function processMail(mail) {
           // Check if users exist
           await Promise.all(
             emails.map(async (referredEmail) => {
-              // Method from here https://stackoverflow.com/questions/37576685/using-async-await-with-a-foreach-loop
-              const findReferredUser = await User.findOne(
-                { email: referredEmail },
-                'email firstName receiveFromIds',
-              );
-              if (findReferredUser) {
-                console.log(`${referredEmail} already exists - will send on_receivefriendrequest`);
-                // Add to receiveFromIds
-                const receiveFromIds = findReferredUser.receiveFromIds;
-                console.log(receiveFromIds);
-                receiveFromIds.push(id);
-                const updateReceiveFromIds = await User.update(
-                  { referredEmail },
-                  { receiveFromIds },
-                  { multi: true },
-                );
-                console.log(updateReceiveFromIds);
-                // Send email saying 'X has added you. If not cool, let us know'
-                sendMail('on_receivefriendrequest', referredEmail, { firstName, lastName, email });
+              if (referredEmail === email) {
+                console.log('Picked up user email (maybe in signature) so ignored');
               } else {
-                console.log(`${referredEmail} does not exist so will create and send on_invite`);
-                const newUser = new User({
-                  email: referredEmail,
-                  timeCreated: moment().toString(),
-                  referredBy: email,
-                  receiveFromIds: [id],
-                }); // Change to moment.js
-                const saveConfirm = await newUser.save();
-                console.log(saveConfirm);
-                sendMail('on_invite', referredEmail, { firstName, lastName, email });
+                const findReferredUser = await User.findOne(
+                  { email: referredEmail },
+                  'email firstName receiveFromIds',
+                );
+                if (findReferredUser) {
+                  console.log(
+                    `${referredEmail} already exists - will send on_receivefriendrequest`,
+                  );
+                  // Add to receiveFromIds
+                  const receiveFromIds = findReferredUser.receiveFromIds;
+                  console.log(receiveFromIds);
+                  receiveFromIds.push(id);
+                  const updateReceiveFromIds = await User.update(
+                    { referredEmail },
+                    { receiveFromIds },
+                    { multi: true },
+                  );
+                  console.log(updateReceiveFromIds);
+                  // Send email saying 'X has added you. If not cool, let us know'
+                  sendMail('on_receivefriendrequest', referredEmail, {
+                    firstName,
+                    lastName,
+                    email,
+                    rejectFriendRequest,
+                  });
+                } else {
+                  console.log(`${referredEmail} does not exist so will create and send on_invite`);
+                  const newUser = new User({
+                    email: referredEmail,
+                    timeCreated: moment().format(),
+                    referredBy: email,
+                    receiveFromIds: [id],
+                    currentStoryId: false,
+                  }); // Change to moment.js
+                  const saveConfirm = await newUser.save();
+                  console.log(saveConfirm);
+                  sendMail('on_invite', referredEmail, { firstName, lastName, email });
+                }
               }
             }),
           );
@@ -185,17 +208,36 @@ async function processMail(mail) {
 
         // Check for commands
 
-        if (text.includes('DELETE')) {
-          // Reply confirming
-          // Send email to the recipient confirming
+        if (text.includes(cmd.deleteFriend || cmd.addFriend)) {
+          const changes = searchAddAndRemove(text);
+          console.log(changes);
+          changes.addEmails.forEach((item) => {
+            if (item === email) {
+              console.log('Skip your own email if in there');
+            } else {
+              // Reply confirming
+              // Send email to the recipient confirming
+            }
+          });
+          changes.removeEmails.forEach((item) => {
+            if (item === email) {
+              console.log('Skip your own email if in there');
+            } else {
+              // Reply confirming
+              // Send email to the recipient confirming
+            }
+          });
           return;
         }
-        if (text.includes('REMOVEIMAGE')) {
-          // Reply confirming
-          return;
-        }
-        if (text.includes('QUESTION')) {
+        if (text.includes(cmd.sundayHelp)) {
           // Forward it to my personal inbox
+          // Reply saying help is on the way
+          return;
+        }
+        if (text.includes(cmd.cancelStory)) {
+          // Find current story
+          // Delete it
+          // Send confirmation of cancellation
           return;
         }
 
@@ -251,26 +293,24 @@ async function processMail(mail) {
 
         // Check if this week's story already exists
         const thisWeeksStory = await Story.findOne(
-          {
-            idOfCreator: id,
-            weekCommencing: moment()
-              .startOf('week')
-              .hour(12)
-              .format(),
-          },
-          'idOfCreator imageUrl _id',
+          { _id: currentStoryId },
+          'idOfCreator imageUrl _id weekCommencing',
         );
         console.log(thisWeeksStory);
-
-        if (text.includes('UPDATEIMAGE')) {
-          // Standard reply
-          return;
+        if (
+          thisWeeksStory.weekCommencing ===
+          moment()
+            .startOf('week')
+            .hour(12)
+            .format()
+        ) {
+          console.log('Already has a story this week');
         }
 
         // Save the story down
         const story = new Story({
           text: storyText,
-          imageUrl: null,
+          imageUrl: null, // FIXME: should be 'NO_IMAGE' if no image
           timeCreated: moment().format(),
           weekCommencing: moment()
             .startOf('week')

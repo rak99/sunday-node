@@ -1,3 +1,5 @@
+import { cmd } from '../mail/commands';
+
 export const searchName = (emailText, nameVariants) => {
   for (let i = 0; i < nameVariants.length; i += 1) {
     let index = emailText.toLowerCase().indexOf(nameVariants[i].toLowerCase());
@@ -19,8 +21,45 @@ export const searchName = (emailText, nameVariants) => {
   return false;
 };
 
+const testAddAndRemove = `
+  ADDREADER
+  
+  james@happy.com
+
+  REMOVEREADER
+  hippy@seller.com
+
+  REMOVEREADER
+   wack@seller.com
+  louis.barclay@gmail.com
+`;
+
+const emailRegex = /([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
+const emailAddRegex = new RegExp(`(${cmd.addFriend}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`, 'gi');
+const emailRemoveRegex = new RegExp(`(${cmd.deleteFriend}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`, 'gi');
+
+export const searchAddAndRemove = (emailText) => {
+  const addEmails = [];
+  const removeEmails = [];
+  function findEmails(emailsArray, regexOption) {
+    if (emailText.match(regexOption) !== null) {
+      emailText.match(regexOption).forEach((item) => {
+        emailsArray.push(item.match(emailRegex)[0]);
+      });
+    }
+  }
+  findEmails(removeEmails, emailRemoveRegex);
+  findEmails(addEmails, emailAddRegex);
+  return {
+    removeEmails,
+    addEmails,
+  };
+};
+
+searchAddAndRemove(testAddAndRemove);
+
 export const searchEmails = (emailText) => {
-  const emails = emailText.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
+  const emails = emailText.match(emailRegex);
   console.log(emails);
   return emails;
 };
