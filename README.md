@@ -7,15 +7,15 @@ Add this line to compile pug:
 
 # Testing:
 
-louis.barclay@gmail.com sends email
+1. louis.barclay@gmail.com sends email
 
 EXPECTED: reply asking for more info
 
 louis.barclay@gmail.com provides more info
 invites:
-- janet@curtains.com
-- fred@pie.com
-- xanthe@exotic.com
+- louis.barclay+janet@gmail.com
+- louis.barclay+fred@gmail.com
+- louis.barclay+xanthe@gmail.com
 Also has own email in signature at bottom of email
 louis.barclay@gmail.com
 
@@ -25,9 +25,9 @@ louis.barclay@gmail.com emails in again, with image and story
 
 EXPECTED: confirmation of story creation
 
-janet@curtains.com asks not to be sent stories by louis.barclay@gmail.com - TAKEMEOUT
+louis.barclay+janet@gmail.com asks not to be sent stories by louis.barclay@gmail.com - TAKEMEOUT
 
-EXPECTED: confirmation of deletion - to janet@curtains.com and to louis.barclay@gmail.com
+EXPECTED: confirmation of deletion - to louis.barclay+janet@gmail.com and to louis.barclay@gmail.com
 
 louis.barclay@gmail.com emails in again, with updated image and story
 
@@ -37,11 +37,11 @@ louis.barclay@gmail.com emails in again, writing UPDATEIMAGE and with new image
 
 EXPECTED: story gets updated, confirmation gets sent
 
-fred@pie.com emails with name
+louis.barclay+fred@gmail.com emails with name
 
 FIXME: clarify in invite that inviter will be recipient by default
 
-EXPECTED: louis.barclay@gmail.com update receiveFromID. send confirmation of recipients to fred@pie.com
+EXPECTED: louis.barclay@gmail.com update receiveFromID. send confirmation of recipients to louis.barclay+fred@gmail.com
 
 louis.barclay@gmail.com writes CANCEL to story
 

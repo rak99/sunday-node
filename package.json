@@ -23,7 +23,10 @@
       "linebreak-style": 0,
       "no-console": 0,
       "no-unused-vars": 1,
-      "indent": ["error", 2],
+      "indent": [
+        "error",
+        2
+      ],
       "no-param-reassign": 0
     }
   },
@@ -39,7 +42,7 @@
     "express": "^4.13.3",
     "image-size": "^0.6.1",
     "lodash": "^4.17.4",
-    "mail-listener-fixed": "^1.1.0",
+    "mail-listener2": "https://github.com/lgwb89/mail-listener2.git",
     "mailparser": "^2.0.5",
     "moment": "^2.21.0",
     "mongoose": "^4.10.6",

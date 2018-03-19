@@ -1,4 +1,4 @@
-import MailListener from 'mail-listener-fixed';
+import MailListener from 'mail-listener2';
 import _ from 'lodash';
 import fs from 'fs';
 import parseReply from 'parse-reply';
@@ -47,13 +47,13 @@ const story2 = [
 // For testing
 // deleteUserData();
 
-let email1 = fs.readFileSync('./src/mail/tests/email_with_names_and_emails.json', 'utf8');
+let email1 = fs.readFileSync('./emails/tests/email_with_names_and_emails.json', 'utf8');
 email1 = JSON.parse(email1);
 
-let email2 = fs.readFileSync('./src/mail/tests/email_to_create_story.json', 'utf8');
+let email2 = fs.readFileSync('./emails/tests/email_to_create_story.json', 'utf8');
 email2 = JSON.parse(email2);
 
-let email3 = fs.readFileSync('./src/mail/tests/email_with_test_images.json', 'utf8');
+let email3 = fs.readFileSync('./emails/tests/email_with_test_images.json', 'utf8');
 email3 = JSON.parse(email3);
 
 const mailListener = new MailListener({
@@ -85,7 +85,8 @@ const mailListener = new MailListener({
 const imgMsgs = {
   noImg:
     "We didn't find any attached image large enough to include in your story. If you want to include an image, reply to this email including the original story, and with an image attached which is at least 660 pixels wide.",
-  oneImg: 'We found an image with your story and have included it below. If this is the wrong image, reply to this email with your original story in the reply and the new image attached. If you decide you no longer want an image, simply reply to this email with your original story only, and no image.',
+  oneImg:
+    'We found an image with your story and have included it below. If this is the wrong image, reply to this email with your original story in the reply and the new image attached. If you decide you no longer want an image, simply reply to this email with your original story only, and no image.',
 };
 
 async function processMail(mail) {
@@ -205,6 +206,7 @@ async function processMail(mail) {
       } else {
         // Found findOne.firstName so user is properly registered
         console.log(`${email}, registered user, sent an email`);
+        const firstName = findUser.firstName;
 
         // Check for commands
 
@@ -235,8 +237,10 @@ async function processMail(mail) {
           return;
         }
         if (text.includes(cmd.cancelStory)) {
-          // Find current story
+          // Find current story using currentStoryId
+          // Find out if it's current
           // Delete it
+          // Set currentStoryId to false
           // Send confirmation of cancellation
           return;
         }
@@ -250,46 +254,48 @@ async function processMail(mail) {
 
         // Check for attachments
         if (!_.isUndefined(mail.attachments)) {
-          // Image upload function
-          function imgUpload(err, outputBuffer) {
-            if (err) {
-              throw err;
-            } else {
+          async function imgUpload(outputBuffer) {
+            if (!storyImgFileName) {
               const cryptoImgId = crypto.randomBytes(10).toString('hex');
-              storyImgFileName = `${id.substring(0, 10)}${cryptoImgId}.png`;
-              uploadAttachment(outputBuffer, `${storyImgFileName}.png`);
+              storyImgFileName = `${id.toString().substring(0, 10)}${cryptoImgId}.png`;
+              await uploadAttachment(outputBuffer, `${storyImgFileName}`);
+              console.log(`${storyImgFileName}here`);
               confirmMsg = imgMsgs.oneImg;
             }
           }
+          // Image upload function
           // Loop through images
-          for (let i = 0; i < mail.attachments.length; i++) {
-            const attachment = mail.attachments[i];
-            const attachmentType = attachment.contentType;
-            // Check if attachment is an image
-            if (attachmentType.includes('image')) {
-              const imgBuffer = new Buffer.from(attachment.content);
-              const fileName = attachment.fileName;
-              // Find out size of image
-              const dimensions = sizeOf(imgBuffer);
-              console.log(`Image: ${fileName}, ${attachmentType}, ${dimensions.width}`);
-              if (dimensions.width < 660) {
-                console.log('Found small image, will skip');
-              } else if (dimensions.width > 1320) {
-                console.log('Found large image, will resize');
-                sharp(imgBuffer)
-                  .resize(1320)
-                  .png()
-                  .toBuffer((err, outputBuffer) => imgUpload(err, outputBuffer));
-                break;
-              } else {
-                sharp(imgBuffer)
-                  .png()
-                  .toBuffer((err, outputBuffer) => imgUpload(err, outputBuffer));
-                break;
+          await Promise.all(
+            mail.attachments.map(async (attachment) => {
+              const attachmentType = attachment.contentType;
+              // Check if attachment is an image
+              if (attachmentType.includes('image')) {
+                const imgBuffer = new Buffer.from(attachment.content);
+                const fileName = attachment.fileName;
+                // Find out size of image
+                const dimensions = sizeOf(imgBuffer);
+                console.log(`Image: ${fileName}, ${attachmentType}, ${dimensions.width}`);
+                // Forget small images, and take first large image
+                if (dimensions.width < 660) {
+                  console.log('Found small image, will skip');
+                } else if (dimensions.width > 1320) {
+                  console.log('Found large image, will resize');
+                  const processedImage = await sharp(imgBuffer)
+                    .resize(1320)
+                    .png()
+                    .toBuffer();
+                  await imgUpload(processedImage);
+                } else {
+                  const processedImage = await sharp(imgBuffer)
+                    .png()
+                    .toBuffer();
+                  await imgUpload(processedImage);
+                }
               }
-            }
-          }
+            }),
+          );
         }
+        console.log(`${storyImgFileName}there`);
 
         // Check if this week's story already exists
         const thisWeeksStory = await Story.findOne(
@@ -297,14 +303,16 @@ async function processMail(mail) {
           'idOfCreator imageUrl _id weekCommencing',
         );
         console.log(thisWeeksStory);
-        if (
-          thisWeeksStory.weekCommencing ===
-          moment()
-            .startOf('week')
-            .hour(12)
-            .format()
-        ) {
-          console.log('Already has a story this week');
+        if (thisWeeksStory) {
+          if (
+            thisWeeksStory.weekCommencing ===
+            moment()
+              .startOf('week')
+              .hour(12)
+              .format()
+          ) {
+            console.log('Already has a story this week');
+          }
         }
 
         // Save the story down
@@ -322,15 +330,22 @@ async function processMail(mail) {
           if (err) console.log(err);
         });
 
+        console.log(`${storyImgFileName}everywhere`);
+        // FIXME: It's arriving false here, perhaps because of async?
         if (storyImgFileName) {
-          storyImgFileName = `AWSSTRING ${storyImgFileName}`;
+          storyImgFileName = `https://s3-eu-west-1.amazonaws.com/sundaystories/${storyImgFileName}`;
         }
 
         // Reply with story confirmation
+        // sendMail('on_sunday', sundayRecipient, { names: sundayNames, stories: [story1, story2] });
+        // Must include firstName, and confirmMsg
+        console.log(storyImgFileName);
         sendMail(
           'on_storyconfirm',
           email,
-          { message: confirmMsg, text: storyText, url: storyImgFileName },
+          {
+            stories: [[storyText, 'heyyy', 'yeaaaa', storyImgFileName]],
+          },
           mail.messageId,
           mail.subject,
         );
@@ -361,7 +376,7 @@ const listener = {
 
     mailListener.on('mail', (mail, seqno, attributes) => {
       processMail(mail);
-      fs.writeFile(`./src/mail/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
+      fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
         if (err) console.log(err);
         else console.log('Email saved');
       });
