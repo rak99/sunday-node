@@ -1,4 +1,4 @@
-import MailListener from 'mail-listener2';
+import MailListener from 'mail-listener4';
 import _ from 'lodash';
 import fs from 'fs';
 import parseReply from 'parse-reply';
@@ -7,12 +7,12 @@ import sizeOf from 'image-size';
 import sharp from 'sharp';
 import talon from 'talon';
 import crypto from 'crypto';
-
 import User from '../db/models/user';
 import Story from '../db/models/story';
 import { cmd } from '../mail/commands';
 import { createStory } from '../db/actions/story';
 import { deleteUserData } from '../db/actions/user';
+import { deleteStoryData } from '../db/actions/story';
 import {
   searchName,
   searchEmails,
@@ -44,17 +44,61 @@ const story2 = [
 ];
 // sendMail('on_sunday', sundayRecipient, { names: sundayNames, stories: [story1, story2] });
 
-// For testing
-// deleteUserData();
+const tests = fs.readdirSync('./emails/tests/');
 
-let email1 = fs.readFileSync('./emails/tests/email_with_names_and_emails.json', 'utf8');
-email1 = JSON.parse(email1);
+const deleteData = true;
+const chooseTests = ['1', '3', '4'];
+const testDelay = 10000;
+// const chooseTests = false;
+runTests();
 
-let email2 = fs.readFileSync('./emails/tests/email_to_create_story.json', 'utf8');
-email2 = JSON.parse(email2);
+async function finder() {
+  const findReaders = await User.find({ $text: { $search: '5ab29f798238bc0de01a8b10' } });
+  console.log(findReaders);
+}
+// finder();
 
-let email3 = fs.readFileSync('./emails/tests/email_with_test_images.json', 'utf8');
-email3 = JSON.parse(email3);
+function runTests() {
+  if (deleteData) {
+    // TODO: Make sure this setting is correct
+    deleteUserData();
+    deleteStoryData();
+  }
+  // Empty array to store tests starting with number
+  const testsStartingWithNumber = [];
+  // Grab tests starting with number and store
+  tests.forEach((test) => {
+    if (!isNaN(test[0])) {
+      if (chooseTests) {
+        if (chooseTests.indexOf(test[0]) > -1) {
+          testsStartingWithNumber.push(test);
+        }
+      } else {
+        testsStartingWithNumber.push(test);
+      }
+    }
+  });
+  // Sort by number
+  testsStartingWithNumber.sort();
+  // Function to deploy a test
+  function deployTest(testFileName) {
+    const testObject = JSON.parse(fs.readFileSync(`./emails/tests/${testFileName}`, 'utf8'));
+    console.log(`Running test '${testFileName}'`);
+    processMail(testObject);
+  }
+  // Timeout
+  function timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  // Function to run all tests with specified delay
+  async function runWithDelay(array) {
+    for (const item of array) {
+      await timeout(testDelay); // Change delay here
+      deployTest(item);
+    }
+  }
+  runWithDelay(testsStartingWithNumber);
+}
 
 const mailListener = new MailListener({
   username: 'louis@sundaystori.es',
@@ -96,9 +140,8 @@ async function processMail(mail) {
     // Look up user record from email
     const findUser = await User.findOne(
       { email },
-      'email firstName _id receiveFromIds currentStoryId',
+      'email firstName _id writerIds currentStoryId referredBy',
     );
-    console.log(findUser);
     if (!findUser) {
       // If user doesn't exist
       console.log(`${email} not found so will create, and send on_signup`);
@@ -111,10 +154,10 @@ async function processMail(mail) {
         currentStoryId: false,
       });
       const saveConfirm = await newUser.save();
+      console.log(`${saveConfirm.email} saved as new user`);
 
       // Send on_signup email asking them for further details
       sendMail('on_signup', email, {}, mail.messageId, mail.subject);
-      console.log(saveConfirm);
     } else {
       // If user does exist
 
@@ -129,16 +172,28 @@ async function processMail(mail) {
       const text = parseWithTalon(reply).text; // Should use talon instead
 
       // Print the email text
-      console.log(`Email text: \n${text}`);
+      console.log(`Email from ${email}: \n${text.substring(0, 100)}`);
 
       // TODO: fix referredBy property
       // If there is no firstName and user is not a referred user, ask for more info
       if (_.isUndefined(findUser.firstName)) {
+        // Check if friend request got rejected
         if (text.includes(cmd.rejectFriendRequest)) {
-          // See if it's a user wanting to be taken out from another's distribution
+          // Assuming there is a referral email (always should be, send 'on_rejectinvite')
+          if (findUser.referredBy !== 'direct') {
+            console.log(`Referred: ${findUser.referredBy}`);
+            sendMail('on_rejectinvite', findUser.referredBy, {});
+          }
+          User.remove({ email }, (err) => {
+            if (err) {
+              return console.log(err);
+            }
+          });
+          sendMail('on_deleteaccount', email, {}, mail.messageId, mail.subject);
+          // Maybe just delete their account entirely?
+          // Tell their referral email person that they are not interested
           // Reply confirming
-          // TODO: this
-          // Send email to their referrer saying no thank you
+          // Tell their referrer
           return;
         }
 
@@ -154,7 +209,7 @@ async function processMail(mail) {
         } else {
           // We got the info, so we update it
           const update = await User.update({ email }, { firstName, lastName }, { multi: true });
-          console.log(update);
+          console.log(`${email} given name (${update.nModified} update)`);
           // Check if users exist
           await Promise.all(
             emails.map(async (referredEmail) => {
@@ -163,28 +218,28 @@ async function processMail(mail) {
               } else {
                 const findReferredUser = await User.findOne(
                   { email: referredEmail },
-                  'email firstName receiveFromIds',
+                  'email firstName writerIds',
                 );
                 if (findReferredUser) {
+                  // FIXME: they have not given names so not properly registered.
                   console.log(
                     `${referredEmail} already exists - will send on_receivefriendrequest`,
                   );
-                  // Add to receiveFromIds
-                  const receiveFromIds = findReferredUser.receiveFromIds;
-                  console.log(receiveFromIds);
-                  receiveFromIds.push(id);
-                  const updateReceiveFromIds = await User.update(
+                  // Add to writerIds
+                  const writerIds = findReferredUser.writerIds;
+                  writerIds.push(id.toString());
+                  const updatewriterIds = await User.update(
                     { referredEmail },
-                    { receiveFromIds },
+                    { writerIds },
                     { multi: true },
                   );
-                  console.log(updateReceiveFromIds);
+                  console.log(updatewriterIds);
                   // Send email saying 'X has added you. If not cool, let us know'
                   sendMail('on_receivefriendrequest', referredEmail, {
                     firstName,
                     lastName,
                     email,
-                    rejectFriendRequest,
+                    other: cmd.rejectFriendRequest,
                   });
                 } else {
                   console.log(`${referredEmail} does not exist so will create and send on_invite`);
@@ -192,11 +247,11 @@ async function processMail(mail) {
                     email: referredEmail,
                     timeCreated: moment().format(),
                     referredBy: email,
-                    receiveFromIds: [id],
+                    writerIds: [id.toString()],
                     currentStoryId: false,
                   }); // Change to moment.js
                   const saveConfirm = await newUser.save();
-                  console.log(saveConfirm);
+                  console.log(`${saveConfirm.email} saved as new user`);
                   sendMail('on_invite', referredEmail, { firstName, lastName, email });
                 }
               }
@@ -259,8 +314,9 @@ async function processMail(mail) {
               const cryptoImgId = crypto.randomBytes(10).toString('hex');
               storyImgFileName = `${id.toString().substring(0, 10)}${cryptoImgId}.png`;
               await uploadAttachment(outputBuffer, `${storyImgFileName}`);
-              console.log(`${storyImgFileName}here`);
               confirmMsg = imgMsgs.oneImg;
+            } else {
+              console.log('Already found a suitable image so will not do anything further');
             }
           }
           // Image upload function
@@ -295,7 +351,6 @@ async function processMail(mail) {
             }),
           );
         }
-        console.log(`${storyImgFileName}there`);
 
         // Check if this week's story already exists
         const thisWeeksStory = await Story.findOne(
@@ -358,10 +413,6 @@ async function processMail(mail) {
   }
 }
 
-// processMail(email1);
-// processMail(email2);
-processMail(email3);
-
 const listener = {
   start: () => {
     mailListener.start();
@@ -375,6 +426,7 @@ const listener = {
     });
 
     mailListener.on('mail', (mail, seqno, attributes) => {
+      console.log('got here ????');
       processMail(mail);
       fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
         if (err) console.log(err);
@@ -382,22 +434,10 @@ const listener = {
       });
     });
 
-    mailListener.on('attachment', (attachment) => {
-      // uploadAttachment(attachment.stream);
-    });
-
     mailListener.on('error', (err) => {
       console.log(err);
     });
   },
 };
-
-// if sunday
-// for every user
-// examine receiveFromIds
-// look up each receiveFrom user
-// do they have a story for this week?
-// how many have a story for this week
-// if yes, take story and add into email
 
 export default listener;

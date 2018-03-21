@@ -10,4 +10,13 @@ export const createStory = (text, imageUrl) => {
   });
 };
 
+export const deleteStoryData = () => {
+  Story.remove({}, (err) => {
+    if (err) {
+      return console.log(err);
+    }
+    // removed!
+  });
+};
+
 /* eslint-enable import/prefer-default-export */

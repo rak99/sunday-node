@@ -62,7 +62,7 @@ acorn@^5.5.0:
   version "5.5.3"
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-5.5.3.tgz#f473dd47e0277a08e28e9bec5aeeb04751f0b8c9"
 
-addressparser@1.0.1:
+addressparser@~1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/addressparser/-/addressparser-1.0.1.tgz#47afbe1a2a9262191db6838e4fd1d39b40821746"
 
@@ -1763,7 +1763,7 @@ encodeurl@~1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/encodeurl/-/encodeurl-1.0.2.tgz#ad3ff4c86ec2d029322f5a02c3a9a606c95b3f59"
 
-encoding@^0.1.11:
+encoding@^0.1.11, encoding@^0.1.12, encoding@~0.1.12:
   version "0.1.12"
   resolved "https://registry.yarnpkg.com/encoding/-/encoding-0.1.12.tgz#538b66f3ee62cd1ab51ec323829d1f9480c74beb"
   dependencies:
@@ -1863,7 +1863,7 @@ escape-html@~1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/escape-html/-/escape-html-1.0.3.tgz#0258eae4d3d0c0974de1c169188ef0051d1d1988"
 
-escape-string-regexp@^1.0.2, escape-string-regexp@^1.0.5:
+escape-string-regexp@^1.0.2, escape-string-regexp@^1.0.5, escape-string-regexp@~1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-1.0.5.tgz#1b61c0562190a8dff6ae3bb2cf0200ca130b86d4"
 
@@ -2620,7 +2620,7 @@ hawk@~6.0.2:
     hoek "4.x.x"
     sntp "2.x.x"
 
-he@^1.0.0, he@^1.1.1:
+he@^1.0.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/he/-/he-1.1.1.tgz#93410fd21b009735151f8868c2f271f3427e23fd"
 
@@ -2647,7 +2647,7 @@ hosted-git-info@^2.1.4:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.6.0.tgz#23235b29ab230c576aab0d4f13fc046b0b038222"
 
-html-to-text@3.3.0, html-to-text@^3.3.0:
+html-to-text@^3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/html-to-text/-/html-to-text-3.3.0.tgz#6a9b63c699b885bb7ba84b1446bfe6876bbfcfb7"
   dependencies:
@@ -2707,10 +2707,6 @@ i18n@^0.8.3:
     messageformat "^0.3.1"
     mustache "*"
     sprintf-js ">=1.0.3"
-
-iconv-lite@0.4.15:
-  version "0.4.15"
-  resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.15.tgz#fe265a218ac6a57cfe854927e9d04c19825eddeb"
 
 iconv-lite@0.4.19, iconv-lite@~0.4.13:
   version "0.4.19"
@@ -3256,32 +3252,6 @@ levn@^0.3.0, levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-libbase64@0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/libbase64/-/libbase64-0.1.0.tgz#62351a839563ac5ff5bd26f12f60e9830bb751e6"
-
-libbase64@1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/libbase64/-/libbase64-1.0.2.tgz#2ff13ffe69b1e40159f49368e30d0dd8bb1635b5"
-
-libmime@3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/libmime/-/libmime-3.1.0.tgz#115012f1672051adc8809a8f93955ffc3648edf9"
-  dependencies:
-    iconv-lite "0.4.15"
-    libbase64 "0.1.0"
-    libqp "1.1.0"
-
-libqp@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/libqp/-/libqp-1.1.0.tgz#f5e6e06ad74b794fb5b5b66988bf728ef1dedbe8"
-
-linkify-it@2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/linkify-it/-/linkify-it-2.0.3.tgz#d94a4648f9b1c179d64fa97291268bdb6ce9434f"
-  dependencies:
-    uc.micro "^1.0.1"
-
 load-json-file@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/load-json-file/-/load-json-file-2.0.0.tgz#7947e42149af80d696cbf797bcaabcfe1fe29ca8"
@@ -3383,34 +3353,22 @@ lru-cache@^4.0.1:
     pseudomap "^1.0.2"
     yallist "^2.1.2"
 
-"mail-listener2@https://github.com/lgwb89/mail-listener2.git":
-  version "0.3.1"
-  resolved "https://github.com/lgwb89/mail-listener2.git#b614fe631ef05168e893ac79606adf992cc92201"
+mail-listener4@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/mail-listener4/-/mail-listener4-1.1.1.tgz#396e367905fd07cbce266bde95c92fca5faf1ae5"
   dependencies:
     async "^0.9.0"
     imap "~0.8.14"
-    mailparser ">=2.2.0"
+    mailparser "^0.6.2"
 
-mailparser@>=2.2.0, mailparser@^2.0.5:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/mailparser/-/mailparser-2.2.0.tgz#e3c4d9504d4a5fa5bdd82e8de2d426d74e45e367"
+mailparser@^0.6.2:
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/mailparser/-/mailparser-0.6.2.tgz#03c486039bdf4df6cd3b6adcaaac4107dfdbc068"
   dependencies:
-    addressparser "1.0.1"
-    he "^1.1.1"
-    html-to-text "3.3.0"
-    iconv-lite "0.4.19"
-    libmime "3.1.0"
-    linkify-it "2.0.3"
-    mailsplit "4.1.2"
-    tlds "1.199.0"
-
-mailsplit@4.1.2:
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/mailsplit/-/mailsplit-4.1.2.tgz#c618bc311a4cfc83b226a1edc1b503f5a924d083"
-  dependencies:
-    libbase64 "1.0.2"
-    libmime "3.1.0"
-    libqp "1.1.0"
+    encoding "^0.1.12"
+    mime "^1.3.4"
+    mimelib "^0.3.0"
+    uue "^3.1.0"
 
 make-dir@^1.0.0:
   version "1.2.0"
@@ -3520,9 +3478,20 @@ mime@1.4.1:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/mime/-/mime-1.4.1.tgz#121f9ebc49e3766f311a76e1fa1c8003c4b03aa6"
 
+mime@^1.3.4:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/mime/-/mime-1.6.0.tgz#32cd9e5c64553bd58d19a568af452acff04981b1"
+
 mime@~1.2.11:
   version "1.2.11"
   resolved "https://registry.yarnpkg.com/mime/-/mime-1.2.11.tgz#58203eed86e3a5ef17aed2b7d9ebd47f0a60dd10"
+
+mimelib@^0.3.0:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/mimelib/-/mimelib-0.3.1.tgz#787add2415d827acb3af6ec4bca1ea9596418853"
+  dependencies:
+    addressparser "~1.0.1"
+    encoding "~0.1.12"
 
 mimer@^0.3.2:
   version "0.3.2"
@@ -5095,10 +5064,6 @@ timed-out@^4.0.0:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/timed-out/-/timed-out-4.0.1.tgz#f32eacac5a175bea25d7fab565ab3ed8741ef56f"
 
-tlds@1.199.0:
-  version "1.199.0"
-  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.199.0.tgz#a4fc8c3058216488a80aaaebb427925007e55217"
-
 to-fast-properties@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/to-fast-properties/-/to-fast-properties-1.0.3.tgz#b83571fa4d8c25b82e231b06e3a3055de4ca1a47"
@@ -5189,10 +5154,6 @@ typedarray@^0.0.6:
 ua-parser-js@^0.7.9:
   version "0.7.17"
   resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-0.7.17.tgz#e9ec5f9498b9ec910e7ae3ac626a805c4d09ecac"
-
-uc.micro@^1.0.1:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/uc.micro/-/uc.micro-1.0.5.tgz#0c65f15f815aa08b560a61ce8b4db7ffc3f45376"
 
 uglify-js@^2.6.1:
   version "2.8.29"
@@ -5334,6 +5295,13 @@ util-deprecate@^1.0.2, util-deprecate@~1.0.1:
 utils-merge@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
+
+uue@^3.1.0:
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/uue/-/uue-3.1.1.tgz#cebb18980e005769ac7254a0a158a49ad173a518"
+  dependencies:
+    escape-string-regexp "~1.0.5"
+    extend "~3.0.0"
 
 uuid@3.1.0:
   version "3.1.0"

@@ -11,7 +11,11 @@ Add this line to compile pug:
 
 EXPECTED: reply asking for more info
 
-louis.barclay@gmail.com provides more info
+2. louis barclay fails to send more info
+
+EXPECTED: send 'on_noinfo'
+
+3. louis.barclay@gmail.com provides more info
 invites:
 - louis.barclay+janet@gmail.com
 - louis.barclay+fred@gmail.com
@@ -19,15 +23,23 @@ invites:
 Also has own email in signature at bottom of email
 louis.barclay@gmail.com
 
+~~expected to add all 3 of them to louis barclay's receive from ids? or not yet. RESOLVED~~
+FIXME: if send more emails, should ignore right? i think so yeah.
+
 EXPECTED: confirmation. ignore own email
 
-louis.barclay@gmail.com emails in again, with image and story
+#. louis.barclay+janet@gmail.com asks not to be sent stories by louis.barclay@gmail.com - TAKEMEOUT
+
+EXPECTED: confirmation of deletion - to louis.barclay+janet@gmail.com and to louis.barclay@gmail.com
+
+4. louis.barclay@gmail.com emails in again, with repeated sign up info
+
+EXPECTED: assume it's a story from here on in, unless there's a command
+
+5. louis.barclay@gmail.com emails in again, with image and story
 
 EXPECTED: confirmation of story creation
 
-louis.barclay+janet@gmail.com asks not to be sent stories by louis.barclay@gmail.com - TAKEMEOUT
-
-EXPECTED: confirmation of deletion - to louis.barclay+janet@gmail.com and to louis.barclay@gmail.com
 
 louis.barclay@gmail.com emails in again, with updated image and story
 
@@ -37,7 +49,7 @@ louis.barclay@gmail.com emails in again, writing UPDATEIMAGE and with new image
 
 EXPECTED: story gets updated, confirmation gets sent
 
-louis.barclay+fred@gmail.com emails with name
+7. louis.barclay+fred@gmail.com emails with name, and wants to add louis.barclay@gmail.com, and louis.barclay+xanthe.com
 
 FIXME: clarify in invite that inviter will be recipient by default
 

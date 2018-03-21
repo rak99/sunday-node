@@ -14,7 +14,6 @@ export const searchName = (emailText, nameVariants) => {
       text = text.substr(index);
       index = text.search(/\n/i);
       text = text.substr(0, index);
-      console.log(text);
       return text;
     }
   }
@@ -60,7 +59,6 @@ searchAddAndRemove(testAddAndRemove);
 
 export const searchEmails = (emailText) => {
   const emails = emailText.match(emailRegex);
-  console.log(emails);
   return emails;
 };
 

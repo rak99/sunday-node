@@ -5,4 +5,5 @@ export const cmd = {
   rejectFriendRequest: 'NOTHANKS',
   sundayHelp: 'SUNDAYHELP',
   addFriend: 'ADDREADER',
+  removeWriter: 'REMOVEWRITER', // TODO: got to use it
 };
