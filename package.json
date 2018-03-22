@@ -23,7 +23,10 @@
       "linebreak-style": 0,
       "no-console": 0,
       "no-unused-vars": 1,
-      "indent": ["error", 2],
+      "indent": [
+        "error",
+        2
+      ],
       "no-param-reassign": 0
     }
   },
@@ -37,10 +40,10 @@
     "cors": "^2.7.1",
     "email-templates": "^3.5.1",
     "express": "^4.13.3",
+    "humanize-plus": "^1.8.2",
     "image-size": "^0.6.1",
     "lodash": "^4.17.4",
-    "mail-listener-fixed": "^1.1.0",
-    "mailparser": "^2.0.5",
+    "mail-listener4": "^1.1.1",
     "moment": "^2.21.0",
     "mongoose": "^4.10.6",
     "morgan": "^1.8.0",

@@ -4,10 +4,13 @@ const userSchema = Schema({
   firstName: String,
   lastName: String,
   email: String,
-  receiveFromIds: Array,
+  writerIds: Array,
+  referredBy: String,
   timeCreated: String,
   currentStoryId: String,
 });
+
+userSchema.index({ name: 'text', writerIds: 'text' });
 
 const User = mongoose.model('User', userSchema);
 

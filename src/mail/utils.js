@@ -14,7 +14,6 @@ export const searchName = (emailText, nameVariants) => {
       text = text.substr(index);
       index = text.search(/\n/i);
       text = text.substr(0, index);
-      console.log(text);
       return text;
     }
   }
@@ -22,21 +21,21 @@ export const searchName = (emailText, nameVariants) => {
 };
 
 const testAddAndRemove = `
-  ADDREADER
-  
-  james@happy.com
+  First name: Louistest
+Last name: Barclaytest
 
-  REMOVEREADER
-  hippy@seller.com
-
-  REMOVEREADER
-   wack@seller.com
-  louis.barclay@gmail.com
+- louis.barclay+janet@gmail.com
 `;
 
 const emailRegex = /([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
-const emailAddRegex = new RegExp(`(${cmd.addFriend}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`, 'gi');
-const emailRemoveRegex = new RegExp(`(${cmd.deleteFriend}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`, 'gi');
+const emailAddRegex = new RegExp(
+  `(${cmd.addReader}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
+  'gi',
+);
+const emailRemoveRegex = new RegExp(
+  `(${cmd.deleteReader}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
+  'gi',
+);
 
 export const searchAddAndRemove = (emailText) => {
   const addEmails = [];
@@ -60,7 +59,6 @@ searchAddAndRemove(testAddAndRemove);
 
 export const searchEmails = (emailText) => {
   const emails = emailText.match(emailRegex);
-  console.log(emails);
   return emails;
 };
 
@@ -91,15 +89,11 @@ export const lastNameVariants = [
 ];
 
 const testStory = `
-This line.
-
-\n
-\n
-\f
-\t\t\t\t
-
-That line.    
-STORYEND
+First name: Louistest
+Last name: Barclaytest
+- louis.barclay+janet@gmail.com
+- louis.barclay+fred@gmail.com
+- louis.barclay+xanthe@gmail.com
 `;
 
 export const prettifyStory = (emailText) => {
@@ -115,6 +109,7 @@ export const prettifyStory = (emailText) => {
   emailText = emailText.replace(/\t+/g, ' ');
   // Replace multiple spaces with 1 space
   emailText = emailText.replace(/' '+/g, ' ');
+  return emailText;
 };
 
 prettifyStory(testStory);

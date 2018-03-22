@@ -1,4 +1,16 @@
 include top
+p Hi #{firstName},
+p This is your story. It's going to be sent to these emails:::::  
+p 
+
+//- // FIXME: handle storyImgFileName false
+
+    readersHumanized,
+            confirmMsg,
+
+p This is your story. It looks like you currently have no one signed up to receive your stories, so at the moment no one will see it 
+p if you want to add some people, do 'ADDREADER louis.barcka@' or REMOVEREADER
+p If it doesn't show their name that means they haven't signed up to be a writer, so you won't see their stories.
 
 //- Text area
 mixin textArea(name, time, text)
@@ -32,4 +44,6 @@ mixin image(url)
 
 each val in stories
   +textArea(val[0], val[1], val[2])
-  +image(val[3])
+  if val[3]
+    +image(val[3])
+    b something something
