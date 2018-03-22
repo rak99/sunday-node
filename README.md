@@ -28,11 +28,13 @@ FIXME: if send more emails, should ignore right? i think so yeah.
 
 EXPECTED: confirmation. ignore own email
 
-#. louis.barclay+janet@gmail.com asks not to be sent stories by louis.barclay@gmail.com - TAKEMEOUT
+4. louis.barclay+janet@gmail.com asks not to be sent stories by louis.barclay@gmail.com - TAKEMEOUT
 
-EXPECTED: confirmation of deletion - to louis.barclay+janet@gmail.com and to louis.barclay@gmail.com
+EXPECTED: confirmation of deletion
+- to louis.barclay+janet@gmail.com
+- to louis.barclay@gmail.com
 
-4. louis.barclay@gmail.com emails in again, with repeated sign up info
+5. louis.barclay@gmail.com emails in again, with repeated sign up info
 
 EXPECTED: assume it's a story from here on in, unless there's a command
 

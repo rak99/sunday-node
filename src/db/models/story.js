@@ -4,6 +4,7 @@ const storySchema = Schema({
   text: String,
   imageUrl: String,
   timeCreated: String,
+  weekCommencing: String,
   idOfCreator: String,
 });
 

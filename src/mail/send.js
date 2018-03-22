@@ -17,9 +17,9 @@ export const sendMail = (template, to, locals, inReplyTo, subject) => {
     message: {
       from: '"Sunday Stories" <louis@sundaystori.es>',
     },
-    send: true,
+    send: false,
     transport: transporter,
-    preview: false, // Toggle here to avoid annoying popup
+    preview: true, // Toggle here to avoid annoying popup
   });
 
   email

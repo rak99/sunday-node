@@ -7,6 +7,7 @@ import sizeOf from 'image-size';
 import sharp from 'sharp';
 import talon from 'talon';
 import crypto from 'crypto';
+import Humanize from 'humanize-plus';
 import User from '../db/models/user';
 import Story from '../db/models/story';
 import { cmd } from '../mail/commands';
@@ -46,17 +47,11 @@ const story2 = [
 
 const tests = fs.readdirSync('./emails/tests/');
 
-const deleteData = true;
-const chooseTests = ['1', '3', '4'];
+const deleteData = false;
+const chooseTests = ['6'];
 const testDelay = 10000;
 // const chooseTests = false;
 runTests();
-
-async function finder() {
-  const findReaders = await User.find({ $text: { $search: '5ab29f798238bc0de01a8b10' } });
-  console.log(findReaders);
-}
-// finder();
 
 function runTests() {
   if (deleteData) {
@@ -153,8 +148,8 @@ async function processMail(mail) {
         referredBy: 'direct',
         currentStoryId: false,
       });
-      const saveConfirm = await newUser.save();
-      console.log(`${saveConfirm.email} saved as new user`);
+      const createNewUser = await newUser.save();
+      console.log(`${createNewUser.email} saved as new user`);
 
       // Send on_signup email asking them for further details
       sendMail('on_signup', email, {}, mail.messageId, mail.subject);
@@ -163,9 +158,6 @@ async function processMail(mail) {
 
       // Define the user ID
       const id = findUser._id;
-
-      // Define current story id
-      const currentStoryId = findUser._id;
 
       // Parse the reply
       const reply = parseReply(mail.text);
@@ -181,7 +173,7 @@ async function processMail(mail) {
         if (text.includes(cmd.rejectFriendRequest)) {
           // Assuming there is a referral email (always should be, send 'on_rejectinvite')
           if (findUser.referredBy !== 'direct') {
-            console.log(`Referred: ${findUser.referredBy}`);
+            console.log(`${email} referred by: ${findUser.referredBy}`);
             sendMail('on_rejectinvite', findUser.referredBy, {});
           }
           User.remove({ email }, (err) => {
@@ -250,8 +242,8 @@ async function processMail(mail) {
                     writerIds: [id.toString()],
                     currentStoryId: false,
                   }); // Change to moment.js
-                  const saveConfirm = await newUser.save();
-                  console.log(`${saveConfirm.email} saved as new user`);
+                  const createNewUser = await newUser.save();
+                  console.log(`${createNewUser.email} saved as new user`);
                   sendMail('on_invite', referredEmail, { firstName, lastName, email });
                 }
               }
@@ -261,11 +253,17 @@ async function processMail(mail) {
       } else {
         // Found findOne.firstName so user is properly registered
         console.log(`${email}, registered user, sent an email`);
+        // Define first name
         const firstName = findUser.firstName;
+        // Define last name
+        const lastName = findUser.lastName;
+        // Define current story id
+        const currentStoryId = findUser.currentStoryId;
 
         // Check for commands
 
-        if (text.includes(cmd.deleteFriend || cmd.addFriend)) {
+        // If a friend is being added or removed
+        if (text.includes(cmd.deleteReader || cmd.addReader)) {
           const changes = searchAddAndRemove(text);
           console.log(changes);
           changes.addEmails.forEach((item) => {
@@ -274,6 +272,7 @@ async function processMail(mail) {
             } else {
               // Reply confirming
               // Send email to the recipient confirming
+              // do stuff from above?!!!!!! FIXME:
             }
           });
           changes.removeEmails.forEach((item) => {
@@ -286,11 +285,15 @@ async function processMail(mail) {
           });
           return;
         }
+
+        // If help is needed
         if (text.includes(cmd.sundayHelp)) {
           // Forward it to my personal inbox
           // Reply saying help is on the way
           return;
         }
+
+        // If cancelling story
         if (text.includes(cmd.cancelStory)) {
           // Find current story using currentStoryId
           // Find out if it's current
@@ -300,10 +303,11 @@ async function processMail(mail) {
           return;
         }
 
-        // No command so assume it's a story
+        // If no command so assume it's a story
+
         // Extract story text
         const storyText = prettifyStory(text);
-        console.log(storyText);
+        console.log(`Story text: ${storyText.substring(0, 100)}`);
         let storyImgFileName = false;
         let confirmMsg = imgMsgs.noImg;
 
@@ -352,60 +356,107 @@ async function processMail(mail) {
           );
         }
 
-        // Check if this week's story already exists
-        const thisWeeksStory = await Story.findOne(
-          { _id: currentStoryId },
-          'idOfCreator imageUrl _id weekCommencing',
-        );
-        console.log(thisWeeksStory);
-        if (thisWeeksStory) {
-          if (
-            thisWeeksStory.weekCommencing ===
-            moment()
-              .startOf('week')
-              .hour(12)
-              .format()
-          ) {
-            console.log('Already has a story this week');
-          }
-        }
-
-        // Save the story down
-        const story = new Story({
-          text: storyText,
-          imageUrl: null, // FIXME: should be 'NO_IMAGE' if no image
-          timeCreated: moment().format(),
-          weekCommencing: moment()
-            .startOf('week')
-            .hour(12)
-            .format(), // FIXME: important concept
-          idOfCreator: id,
-        });
-        story.save((err) => {
-          if (err) console.log(err);
-        });
-
-        console.log(`${storyImgFileName}everywhere`);
-        // FIXME: It's arriving false here, perhaps because of async?
+        // If image exists, append URL
         if (storyImgFileName) {
           storyImgFileName = `https://s3-eu-west-1.amazonaws.com/sundaystories/${storyImgFileName}`;
         }
 
+        // Check if we should create a new story or just update
+        let noStoryYetThisWeek = true;
+        console.log(currentStoryId);
+        if (currentStoryId) {
+          const currentStory = await Story.findOne(
+            { _id: currentStoryId },
+            'idOfCreator imageUrl _id weekCommencing',
+          );
+          if (currentStory) {
+            // If there is any currentStory at all (might not be)
+            console.log('DETAILS START');
+            console.log(currentStory);
+            console.log(currentStory.weekCommencing);
+            console.log(
+              moment()
+                .startOf('week')
+                .hour(12)
+                .format(),
+            );
+            console.log('DETAILS END');
+            // Check if it's from this week
+            if (
+              currentStory.weekCommencing ===
+              moment()
+                .startOf('week')
+                .hour(12)
+                .format()
+            ) {
+              console.log('REACH HERE');
+              noStoryYetThisWeek = false;
+            }
+          }
+        }
+
+        if (noStoryYetThisWeek) {
+          // Create new story
+          const newStory = new Story({
+            text: storyText,
+            imageUrl: storyImgFileName,
+            timeCreated: moment().format(),
+            weekCommencing: moment()
+              .startOf('week')
+              .hour(12)
+              .format(),
+            idOfCreator: id,
+          });
+          const createNewStory = await newStory.save();
+          console.log(`Created new ${email} story: ${createNewStory.text}`);
+          // Set new currentStoryId
+          const updateCurrentStoryId = await User.update(
+            { email },
+            { currentStoryId: createNewStory.id.toString() },
+            { multi: false },
+          );
+          console.log(`${email} currentStoryId change (${updateCurrentStoryId.nModified} update)`);
+        } else {
+          // Update existing story
+          const updateStory = await Story.update(
+            { _id: currentStoryId },
+            { text: storyText, imageUrl: storyImgFileName, timeCreated: moment().format() },
+            { multi: true },
+          );
+          console.log(`${email} story update (${updateStory.nModified} update)`);
+        }
+
         // Reply with story confirmation
-        // sendMail('on_sunday', sundayRecipient, { names: sundayNames, stories: [story1, story2] });
-        // Must include firstName, and confirmMsg
-        console.log(storyImgFileName);
+        
+        
+        // Find readers for confirmation
+        const findReaders = await User.find({ $text: { $search: id.toString() } });
+        const readersArray = [];
+        let readersHumanized = false;
+        if (findReaders.length > 0) {
+          findReaders.forEach((item) => {
+            if (_.isUndefined(item.firstName)) {
+              readersArray.push(item.email);
+            } else {
+              readersArray.push(`${item.firstName} ${item.lastName} (${item.email})`);
+            }
+          });
+          readersHumanized = Humanize.oxford(readersArray);
+        }
+        console.log(readersHumanized);
+
         sendMail(
           'on_storyconfirm',
           email,
           {
-            stories: [[storyText, 'heyyy', 'yeaaaa', storyImgFileName]],
+            firstName,
+            readersHumanized,
+            confirmMsg,
+            stories: [[`${firstName} ${lastName}`, 'Tuesday', storyText, storyImgFileName]],
           },
           mail.messageId,
           mail.subject,
         );
-        // Or if no commands, log a story and reply saying story created
-        // If that's not what you wanted, let us know
       }
     }
   } catch (e) {
@@ -426,7 +477,6 @@ const listener = {
     });
 
     mailListener.on('mail', (mail, seqno, attributes) => {
-      console.log('got here ????');
       processMail(mail);
       fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
         if (err) console.log(err);
