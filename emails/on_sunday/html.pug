@@ -1,35 +1,9 @@
-include top
-
-//- Text area
-mixin textArea(name, time, text)
-  table(width='100%', border='0', cellpadding='0', cellspacing='0', bgcolor='#ffffff')
-    tr
-      td(align='left', valign='top')
-        table.wrapto100pc(width='660', border='0', cellspacing='0', cellpadding='0')
-          tr
-            td(align='center', valign='top')
-              table(width='100%', border='0', cellpadding='0', cellspacing='0', bgcolor='#ffffff')
-                tr
-                  td(align='center', valign='top', style='padding:0px 10px 10px 10px;')
-                    table.wrapto100pc(width='600', border='0', cellspacing='0', cellpadding='0')
-                      tr
-                        td(align='left', valign='top', style='font-family: sans-serif;')
-                          =text
-
-//- Image
-mixin image(url)
-  table(width='100%', border='0', cellpadding='0', cellspacing='0', bgcolor='#ffffff')
-    tr
-      td(align='left', valign='top')
-        table.wrapto100pc(width='660', border='0', cellspacing='0', cellpadding='0')
-          tr
-            td(align='center', valign='top')
-              table(width='100%', border='0', cellpadding='0', cellspacing='0')
-                tr
-                  td(align='center', valign='top')
-                    a(href='')
-                      img.wrapto100pc(src=url, width='660', alt='', style='display:block')
+include ../shared/story-top
+include ../shared/common
+include ../shared/story-content
 
 each val in stories
   +textArea(val[0], val[1], val[2])
-  +image(val[3])
+  +br
+  if val[3]
+    +image(val[3])

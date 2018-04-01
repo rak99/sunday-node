@@ -27,38 +27,47 @@ Last name: Barclaytest
 - louis.barclay+janet@gmail.com
 `;
 
-const emailRegex = /([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
-const emailAddRegex = new RegExp(
+const matchEmail = /([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
+const matchAddReader = new RegExp(
   `(${cmd.addReader}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
   'gi',
 );
-const emailRemoveRegex = new RegExp(
-  `(${cmd.deleteReader}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
+const matchRemoveReader = new RegExp(
+  `(${cmd.removeReader}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
+  'gi',
+);
+const matchRemoveWriter = new RegExp(
+  `(${cmd.removeWriter}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
   'gi',
 );
 
 export const searchAddAndRemove = (emailText) => {
-  const addEmails = [];
-  const removeEmails = [];
+  // Arrays to provide the info in
+  const addReaderEmails = [];
+  const removeReaderEmails = [];
+  const removeWriterEmails = [];
+  // Pull out emails according to the regex
   function findEmails(emailsArray, regexOption) {
     if (emailText.match(regexOption) !== null) {
-      emailText.match(regexOption).forEach((item) => {
-        emailsArray.push(item.match(emailRegex)[0]);
+      emailText.match(regexOption).forEach(item => {
+        emailsArray.push(item.match(matchEmail)[0]);
       });
     }
   }
-  findEmails(removeEmails, emailRemoveRegex);
-  findEmails(addEmails, emailAddRegex);
+  findEmails(removeReaderEmails, matchRemoveReader);
+  findEmails(addReaderEmails, matchAddReader);
+  findEmails(removeWriterEmails, matchRemoveWriter);
   return {
-    removeEmails,
-    addEmails,
+    removeReaderEmails,
+    addReaderEmails,
+    removeWriterEmails,
   };
 };
 
 searchAddAndRemove(testAddAndRemove);
 
-export const searchEmails = (emailText) => {
-  const emails = emailText.match(emailRegex);
+export const searchEmails = emailText => {
+  const emails = emailText.match(matchEmail);
   return emails;
 };
 
@@ -88,28 +97,50 @@ export const lastNameVariants = [
   'lastname',
 ];
 
-const testStory = `
-First name: Louistest
-Last name: Barclaytest
-- louis.barclay+janet@gmail.com
-- louis.barclay+fred@gmail.com
-- louis.barclay+xanthe@gmail.com
-`;
-
-export const prettifyStory = (emailText) => {
+export const trimAndFindStoryEnd = emailText => {
   if (emailText.includes('STORYEND')) {
     emailText = emailText.substr(0, emailText.indexOf('STORYEND'));
   }
   emailText = emailText.trim();
-  // Replace assorted line breaks with new lines
-  emailText = emailText.replace(/\r+|\f+/g, '\n');
-  // Replace multiple new lines with 1 new line
-  emailText = emailText.replace(/\n+/g, '\n');
-  // Replace tabs with spaces
-  emailText = emailText.replace(/\t+/g, ' ');
-  // Replace multiple spaces with 1 space
-  emailText = emailText.replace(/' '+/g, ' ');
   return emailText;
 };
 
-prettifyStory(testStory);
+export const unwrapPlainText = plainText => {
+  const array = plainText.split('\n');
+  // Find current max line length
+  let max = 0;
+  array.forEach(item => {
+    if (item.length > max) {
+      max = item.length;
+    }
+  });
+  // Adjust cutoff if max line length is longer
+  let cutOff = 70;
+  if (max > cutOff) {
+    cutOff = max;
+  }
+  console.log(cutOff);
+  let newString = '';
+  for (let i = 0; i < array.length; i++) {
+    // Define this item
+    const thisItem = array[i];
+    // Define next item
+    const nextItem = array[i + 1];
+    if (typeof nextItem === 'undefined') {
+      // See if there is a next item
+    } else if (thisItem === '') {
+      newString += '\n'; // Add a line break for empty strings in array
+    } else {
+      // Define next item array split by space, to grab first word
+      const nextItemArray = nextItem.split(' ');
+      // console.log(thisItem, nextItemArray[0], thisItem.length, nextItemArray[0].length);
+      // See if line would have been long enough to force wrap
+      if (thisItem.length + nextItemArray[0].length + 1 > cutOff) {
+        newString += `${thisItem} `; // Put a space after string - not a real line break
+      } else {
+        newString += `${thisItem}\n`; // Put a line break after string - real line break
+      }
+    }
+  }
+  return newString;
+};

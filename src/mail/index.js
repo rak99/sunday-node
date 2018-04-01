@@ -8,10 +8,11 @@ import sharp from 'sharp';
 import talon from 'talon';
 import crypto from 'crypto';
 import Humanize from 'humanize-plus';
+import replyParser from 'node-email-reply-parser';
+import htmlToText from 'html-to-text';
 import User from '../db/models/user';
 import Story from '../db/models/story';
 import { cmd } from '../mail/commands';
-import { createStory } from '../db/actions/story';
 import { deleteUserData } from '../db/actions/user';
 import { deleteStoryData } from '../db/actions/story';
 import {
@@ -19,8 +20,9 @@ import {
   searchEmails,
   firstNameVariants,
   lastNameVariants,
-  prettifyStory,
   searchAddAndRemove,
+  trimAndFindStoryEnd,
+  unwrapPlainText,
 } from '../mail/utils';
 import uploadAttachment from '../mail/attachments';
 import { sendMail } from '../mail/send';
@@ -28,6 +30,13 @@ import { sendMail } from '../mail/send';
 const parseWithTalon = talon.signature.bruteforce.extractSignature;
 
 // sendMail('mars', 'louis.barclay@gmail.com', locals, inReplyTo, optionalSubject);
+
+const imgMsgs = {
+  noImg:
+    "We didn't find any attached image large enough to include in your story. You might not want to include an image, but if you do, reply to this email including the original story, and with an image attached which is at least 660 pixels wide.",
+  oneImg:
+    'We found an image with your story and have included it below. If this is the wrong image, reply to this email with your original story in the reply and the new image attached. If you decide you no longer want an image, simply reply to this email with your original story only, and no image.',
+};
 
 const sundayRecipient = 'louis.barclay@gmail.com';
 const sundayNames = 'Julie, Tim and Banjo';
@@ -43,12 +52,22 @@ const story2 = [
   'This is another story',
   'http://www.toursmongolia.com/uploads/Mongolia_landscape_Photography_by_Bayar.jpg',
 ];
+const story3 = ['Matthew Gleab', '1pm, Saturday', 'This is another story', false];
 // sendMail('on_sunday', sundayRecipient, { names: sundayNames, stories: [story1, story2] });
+
+// Test story confirm
+// sendMail('on_storyconfirm', 'louis.barclay@gmail.com', {
+//   firstName: 'Louis',
+//   readersHumanized:
+//     'louis.barclay@gmail.com, justin.gardner@hello.com, and Jane Birkin (jane.birkin@gmail.com)',
+//   confirmMsg: imgMsgs.noImg,
+//   stories: [story2],
+// });
 
 const tests = fs.readdirSync('./emails/tests/');
 
 const deleteData = false;
-const chooseTests = ['6'];
+const chooseTests = ['8'];
 const testDelay = 10000;
 // const chooseTests = false;
 runTests();
@@ -121,13 +140,6 @@ const mailListener = new MailListener({
 // how does email work. if you don't attach - just link - will that image disappear after?
 // how does mailSender work. can you attach? how does that all go down?
 
-const imgMsgs = {
-  noImg:
-    "We didn't find any attached image large enough to include in your story. If you want to include an image, reply to this email including the original story, and with an image attached which is at least 660 pixels wide.",
-  oneImg:
-    'We found an image with your story and have included it below. If this is the wrong image, reply to this email with your original story in the reply and the new image attached. If you decide you no longer want an image, simply reply to this email with your original story only, and no image.',
-};
-
 async function processMail(mail) {
   try {
     const email = mail.from[0].address;
@@ -135,7 +147,7 @@ async function processMail(mail) {
     // Look up user record from email
     const findUser = await User.findOne(
       { email },
-      'email firstName _id writerIds currentStoryId referredBy',
+      'email firstName lastName _id writerIds currentStoryId referredBy',
     );
     if (!findUser) {
       // If user doesn't exist
@@ -146,7 +158,6 @@ async function processMail(mail) {
         email,
         timeCreated: moment().format(),
         referredBy: 'direct',
-        currentStoryId: false,
       });
       const createNewUser = await newUser.save();
       console.log(`${createNewUser.email} saved as new user`);
@@ -202,6 +213,7 @@ async function processMail(mail) {
           // We got the info, so we update it
           const update = await User.update({ email }, { firstName, lastName }, { multi: true });
           console.log(`${email} given name (${update.nModified} update)`);
+          // Send confirmation to the person who got the sign ups
           // Check if users exist
           await Promise.all(
             emails.map(async (referredEmail) => {
@@ -240,7 +252,6 @@ async function processMail(mail) {
                     timeCreated: moment().format(),
                     referredBy: email,
                     writerIds: [id.toString()],
-                    currentStoryId: false,
                   }); // Change to moment.js
                   const createNewUser = await newUser.save();
                   console.log(`${createNewUser.email} saved as new user`);
@@ -249,6 +260,11 @@ async function processMail(mail) {
               }
             }),
           );
+          // FIXME: Send confirmation to the person who signed up and gave friend emails
+          sendMail('on_confirm_signup', email, {
+            firstName, // ARRAY OF FRIENDS
+            email,
+          });
         }
       } else {
         // Found findOne.firstName so user is properly registered
@@ -263,26 +279,39 @@ async function processMail(mail) {
         // Check for commands
 
         // If a friend is being added or removed
-        if (text.includes(cmd.deleteReader || cmd.addReader)) {
+        if (text.includes(cmd.removeReader || cmd.addReader || cmd.removeWriter)) {
           const changes = searchAddAndRemove(text);
           console.log(changes);
-          changes.addEmails.forEach((item) => {
+          changes.addReaderEmails.forEach((item) => {
             if (item === email) {
               console.log('Skip your own email if in there');
             } else {
+              // Check if exists anyway
               // Reply confirming
               // Send email to the recipient confirming
               // do stuff from above?!!!!!! FIXME:
             }
           });
-          changes.removeEmails.forEach((item) => {
+          changes.removeReaderEmails.forEach((item) => {
             if (item === email) {
               console.log('Skip your own email if in there');
             } else {
+              // Check if exists anyway
               // Reply confirming
               // Send email to the recipient confirming
             }
           });
+          changes.removeWriterEmails.forEach((item) => {
+            if (item === email) {
+              console.log('Skip your own email if in there');
+            } else {
+              console.log(email);
+              // Check if exists anyway
+              // Reply confirming
+              // Send email to the recipient confirming
+            }
+          });
+          // FIXME: should you return?
           return;
         }
 
@@ -303,11 +332,31 @@ async function processMail(mail) {
           return;
         }
 
-        // If no command so assume it's a story
+        // If no command assume it's a story
 
         // Extract story text
-        const storyText = prettifyStory(text);
-        console.log(`Story text: ${storyText.substring(0, 100)}`);
+        let storyText = '';
+        // Original method
+        if (_.isUndefined(mail.html)) {
+          // Take only the reply from the email chain
+          storyText = replyParser(mail.text, true);
+          // Trim and find story end
+          storyText = trimAndFindStoryEnd(storyText);
+          // Unwrap
+          storyText = unwrapPlainText(storyText);
+        } else {
+          // Take only the reply from the email chain
+          storyText = replyParser(mail.html, true);
+          // Convert HTML into text
+          storyText = htmlToText.fromString(storyText, {
+            wordwrap: false,
+            preserveNewlines: true,
+          });
+          // Trim and find story end
+          storyText = trimAndFindStoryEnd(storyText);
+        }
+
+        // console.log(`Story text: ${storyText.substring(0, 100)}`);
         let storyImgFileName = false;
         let confirmMsg = imgMsgs.noImg;
 
@@ -371,16 +420,6 @@ async function processMail(mail) {
           );
           if (currentStory) {
             // If there is any currentStory at all (might not be)
-            console.log('DETAILS START');
-            console.log(currentStory);
-            console.log(currentStory.weekCommencing);
-            console.log(
-              moment()
-                .startOf('week')
-                .hour(12)
-                .format(),
-            );
-            console.log('DETAILS END');
             // Check if it's from this week
             if (
               currentStory.weekCommencing ===
@@ -389,7 +428,6 @@ async function processMail(mail) {
                 .hour(12)
                 .format()
             ) {
-              console.log('REACH HERE');
               noStoryYetThisWeek = false;
             }
           }
@@ -427,8 +465,7 @@ async function processMail(mail) {
         }
 
         // Reply with story confirmation
-        
-        
+
         // Find readers for confirmation
         const findReaders = await User.find({ $text: { $search: id.toString() } });
         const readersArray = [];
@@ -445,14 +482,26 @@ async function processMail(mail) {
         }
         console.log(readersHumanized);
 
+        // Turn story text into array for inserting into template
+        const storyTextArray = storyText.split('\n');
+
+        // Send confirmation TODO: use this for Sunday too
         sendMail(
           'on_storyconfirm',
           email,
           {
             firstName,
+            lastName,
             readersHumanized,
             confirmMsg,
-            stories: [[`${firstName} ${lastName}`, 'Tuesday', storyText, storyImgFileName]],
+            stories: [
+              [
+                `${firstName} ${lastName}`,
+                moment().format('dddd'),
+                storyTextArray,
+                storyImgFileName,
+              ],
+            ],
           },
           mail.messageId,
           mail.subject,
