@@ -33,9 +33,9 @@ const parseWithTalon = talon.signature.bruteforce.extractSignature;
 // Testing utils
 const tests = fs.readdirSync('./emails/tests/');
 const deleteData = true;
-const chooseTests = ['01', '03', '06', '13'];
+// const chooseTests = ['01', '03', '06', '13'];
+const chooseTests = false;
 const testDelay = 10000;
-// const chooseTests = false;
 runTests();
 
 function runTests() {
@@ -166,7 +166,7 @@ async function processMail(mail) {
           // If no other changes, process now, else process later all in one batch
           // Only do operation if there are emails to remove
           if (changes.removeWriterEmails.length > 0) {
-            const removeWriterNames = await removeWriters(
+            const removeWritersSuccess = await removeWriters(
               changes.removeWriterEmails,
               firstName,
               lastName,
@@ -174,15 +174,22 @@ async function processMail(mail) {
               findUser.writerIds,
               idOfEmailer,
             );
-            // Send confirmation
-            const removeWritersHumanized = Humanize.oxford(removeWriterNames);
-            sendMail(
-              'on_removewriter',
-              email,
-              { firstName, lastName, removeWritersHumanized },
-              idOfEmailer,
-            );
-            console.log(`${email}: removeWriter - done for ${removeWritersHumanized}`);
+            // If there were writers to remove
+            if (removeWritersSuccess.length > 0) {
+              // Send confirmation
+              const removeWritersHumanized = Humanize.oxford(removeWritersSuccess);
+              sendMail(
+                'on_removewriter',
+                email,
+                { firstName, lastName, removeWritersHumanized },
+                idOfEmailer,
+              );
+              console.log(`${email}: removeWriter - done for ${removeWritersHumanized}`);
+            } else {
+              // Should be optimised - duplicate with below
+              console.log(`${email}: removeWriter but no valid emails!`);
+              sendMail('on_removewriterfail', email, { command: cmd.removeWriter }, idOfEmailer);
+            }
           } else {
             console.log(`${email}: removeWriter but no emails!`);
             sendMail('on_removewriterfail', email, { command: cmd.removeWriter }, idOfEmailer);
@@ -229,19 +236,33 @@ async function processMail(mail) {
             { multi: true },
           );
           console.log(
-            `${email}: provided names, updated account (${updateNames.nModified} update)`,
+            `${email}: name is ${firstName} ${lastName}, update account (${
+              updateNames.nModified
+            } update)`,
           );
 
           // Add readers
-          addReaders(addReaderEmailsFromSignUp, email, firstName, lastName, idOfEmailer);
-
-          const addReaderEmailsHumanized = Humanize.oxford(addReaderEmailsFromSignUp);
-          // FIXME: Send confirmation to the person who signed up and gave friend emails
-          sendMail('on_confirmsignup', email, {
-            firstName,
-            addReaderEmailsHumanized,
+          const addReaderEmailsSuccess = await addReaders(
+            addReaderEmailsFromSignUp,
             email,
-          });
+            firstName,
+            lastName,
+            idOfEmailer,
+          );
+
+          // Get success array back and use for confirmation
+          const addReaderEmailsHumanized = Humanize.oxford(addReaderEmailsSuccess);
+          sendMail(
+            'on_confirmsignup',
+            email,
+            {
+              firstName,
+              addReaderEmailsHumanized,
+              email,
+            },
+            mail.messageId,
+            mail.subject,
+          );
         }
       } else {
         // Found findOne.firstName so user is properly registered
@@ -285,9 +306,16 @@ async function processMail(mail) {
           }
 
           // Add readers
-          addReaders(changes.addReaderEmails, email, firstName, lastName, idOfEmailer);
+          const addReadersSuccess = await addReaders(
+            changes.addReaderEmails,
+            email,
+            firstName,
+            lastName,
+            idOfEmailer,
+          );
 
           // Remove readers
+          const removeReadersSuccess = [];
           await Promise.all(
             changes.removeReaderEmails.map(async (removeReaderEmail) => {
               if (removeReaderEmail === email) {
@@ -295,14 +323,19 @@ async function processMail(mail) {
               } else {
                 const findRemoveReader = await User.findOne(
                   { email: removeReaderEmail },
-                  'email firstName writerIds',
+                  'email firstName lastName writerIds',
                 );
                 if (findRemoveReader) {
-                  // Add to writerIds
+                  // Remove from writerIds
                   const writerIds = findRemoveReader.writerIds;
                   const index = writerIds.indexOf(idOfEmailer.toString());
                   if (index > -1) {
                     writerIds.splice(index, 1);
+                    if (_.isUndefined(findRemoveReader.firstName)) {
+                      removeReadersSuccess.push(removeReaderEmail);
+                    } else {
+                      removeReadersSuccess.push(`${firstName} ${lastName} (${removeReaderEmail})`);
+                    }
                   }
                   const updateWriterIds = await User.update(
                     { email: removeReaderEmail },
@@ -324,7 +357,7 @@ async function processMail(mail) {
           );
 
           // Remove writers
-          const removeWriterNames = await removeWriters(
+          const removeWritersSuccess = await removeWriters(
             changes.removeWriterEmails,
             firstName,
             lastName,
@@ -339,14 +372,14 @@ async function processMail(mail) {
           let removeReadersHumanized = false;
           let addReadersHumanized = false;
 
-          if (changes.addReaderEmails.length > 0) {
-            addReadersHumanized = Humanize.oxford(changes.addReaderEmails);
+          if (addReadersSuccess.length > 0) {
+            addReadersHumanized = Humanize.oxford(addReadersSuccess);
           }
-          if (changes.removeReaderEmails.length > 0) {
-            removeReadersHumanized = Humanize.oxford(changes.removeReaderEmails);
+          if (removeReadersSuccess.length > 0) {
+            removeReadersHumanized = Humanize.oxford(removeReadersSuccess);
           }
-          if (removeWriterNames.length > 0) {
-            removeWritersHumanized = Humanize.oxford(removeWriterNames);
+          if (removeWritersSuccess.length > 0) {
+            removeWritersHumanized = Humanize.oxford(removeWritersSuccess);
           }
 
           // Send confirmation of changes, if there have been any changes
@@ -600,7 +633,7 @@ async function removeWriters(
   // Remove writers
   // Must find Ids from emails first
   const removeWriterIds = [];
-  const removeWriterNames = [];
+  const successArray = [];
   await Promise.all(
     removeWriterEmails.map(async (removeWriterEmail) => {
       if (removeWriterEmail === email) {
@@ -613,7 +646,7 @@ async function removeWriters(
         if (findRemoveWriter) {
           // Add to array of ids to remove
           removeWriterIds.push(findRemoveWriter.id.toString());
-          removeWriterNames.push(`${findRemoveWriter.firstName} ${findRemoveWriter.lastName}`);
+          successArray.push(`${findRemoveWriter.firstName} ${findRemoveWriter.lastName} (${removeWriterEmail})`);
           // Send email saying 'X has added you. If not cool, let us know'
           sendMail('on_removedaswriter', removeWriterEmail, {
             firstName,
@@ -648,15 +681,11 @@ async function removeWriters(
   const updateWriterIds = await User.update({ email }, { writerIds }, { multi: true });
   console.log(`${email}: removeWriter - completed (${updateWriterIds.nModified} update)`);
 
-  return removeWriterNames;
+  return successArray;
 }
 
 async function addReaders(addReaderEmails, email, firstName, lastName, id) {
-  // Send confirmation to the person who got the sign ups
-  // Check if users exist
-  // Take emails that need to be addReadered, and process them
-  // Takes an array
-  // Takes the original email
+  const successArray = [];
   await Promise.all(
     addReaderEmails.map(async (addReaderEmail) => {
       if (addReaderEmail === email) {
@@ -664,29 +693,44 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
       } else {
         const findReferredUser = await User.findOne(
           { email: addReaderEmail },
-          'email firstName writerIds',
+          'email firstName lastName writerIds',
         );
         if (findReferredUser) {
-          // FIXME: if they have not given names so not properly registered.
           console.log(
             `${email}: addReader - ${addReaderEmail} already exists - will send on_receivefriendrequest`,
           );
           // Add to writerIds
           const writerIds = findReferredUser.writerIds;
-          writerIds.push(id.toString());
-          const updateWriterIds = await User.update(
-            { addReaderEmail },
-            { writerIds },
-            { multi: true },
-          );
-          console.log(`${email}: addReader - completed (${updateWriterIds.nModified} update)`);
-          // Send email saying 'X has added you. If not cool, let us know'
-          sendMail('on_receivefriendrequest', addReaderEmail, {
-            firstName,
-            lastName,
-            email,
-            other: cmd.rejectFriendRequest,
-          });
+          if (writerIds.indexOf(id.toString()) > -1) {
+            // Do nothing
+            console.log(
+              `${email}: addReader - ${addReaderEmail} already a reader`,
+            );
+          } else {
+            writerIds.push(id.toString());
+            const updateWriterIds = await User.update(
+              { email: addReaderEmail },
+              { writerIds },
+              { multi: true },
+            );
+            console.log(
+              `${email}: addReader - ${addReaderEmail} (${updateWriterIds.nModified} update)`,
+            );
+            // Send email saying 'X has added you. If not cool, let us know'
+            sendMail('on_receivefriendrequest', addReaderEmail, {
+              firstName,
+              lastName,
+              email,
+              other: cmd.rejectFriendRequest,
+            });
+          }
+          if (_.isUndefined(findReferredUser.firstName)) {
+            successArray.push(addReaderEmail);
+          } else {
+            successArray.push(
+              `${findReferredUser.firstName} ${findReferredUser.lastName} (${addReaderEmail})`,
+            );
+          }
         } else {
           const newUser = new User({
             email: addReaderEmail,
@@ -700,10 +744,12 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
             `${email}: addReader - ${addReaderEmail} does not exist - create and send on_invite`,
           );
           console.log(`${email}: addReader - your friend ${createNewUser.email} saved as new user`);
+          successArray.push(createNewUser.email);
         }
       }
     }),
   );
+  return successArray;
 }
 
 const listener = {
