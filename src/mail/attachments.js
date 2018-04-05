@@ -16,8 +16,7 @@ export default async function uploadAttachment(buffer, key) {
       Body: buffer,
     };
     const upload = await s3.putObject(params).promise();
-    console.log(`Successfully uploaded ${key}`);
-    console.log(upload);
+    console.log(`^^^^^^^^ Upload ${key}, ETag: ${upload.ETag} ^^^^^^^^`);
   } catch (e) {
     console.log(e);
   }

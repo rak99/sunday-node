@@ -1,0 +1,17 @@
+include ../shared/story-top
+include ../shared/common
+
+div Hey,
++br
+div Just to let you know, we've made the following changes:
++br
+if addReadersHumanized
+  div - added #{addReadersHumanized} to your readers, and sent them an email checking that's OK.
+  +br
+if removeReadersHumanized
+  div - removed #{removeReadersHumanized} from your readers, and let them know.
+  +br
+if removeWritersHumanized
+  div - removed #{removeWritersHumanized} from your writers.
+  +br
+div Hope that's all cool!

@@ -19,7 +19,7 @@ export const sendMail = (template, to, locals, inReplyTo, subject) => {
     },
     send: false,
     transport: transporter,
-    preview: true, // Toggle here to avoid annoying popup
+    preview: false, // Toggle here to avoid annoying popup
   });
 
   email
@@ -33,6 +33,6 @@ export const sendMail = (template, to, locals, inReplyTo, subject) => {
       },
       locals,
     })
-    .then(console.log(`Sent ${template} to ${to}`))
+    .then(console.log(`${to}: sent ${template}`))
     .catch(console.error);
 };

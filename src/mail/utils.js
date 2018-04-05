@@ -119,7 +119,6 @@ export const unwrapPlainText = plainText => {
   if (max > cutOff) {
     cutOff = max;
   }
-  console.log(cutOff);
   let newString = '';
   for (let i = 0; i < array.length; i++) {
     // Define this item
@@ -143,4 +142,11 @@ export const unwrapPlainText = plainText => {
     }
   }
   return newString;
+};
+
+export const imgMsgs = {
+  noImg:
+    "We didn't find any attached image large enough to include in your story. You might not want to include an image, but if you do, reply to this email including the original story, and with an image attached which is at least 660 pixels wide.",
+  oneImg:
+    'We found an image with your story and have included it below. If this is the wrong image, reply to this email with your original story in the reply and the new image attached. If you decide you no longer want an image, simply reply to this email with your original story only, and no image.',
 };

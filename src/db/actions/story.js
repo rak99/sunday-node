@@ -10,8 +10,17 @@ export const createStory = (text, imageUrl) => {
   });
 };
 
-export const deleteStoryData = () => {
+export const deleteAllStories = () => {
   Story.remove({}, (err) => {
+    if (err) {
+      return console.log(err);
+    }
+    // removed!
+  });
+};
+
+export const deleteStory = (id) => {
+  Story.remove({ _id: id }, (err) => {
     if (err) {
       return console.log(err);
     }

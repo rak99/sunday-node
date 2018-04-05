@@ -52,7 +52,7 @@ async function check() {
 
 check();
 
-export const deleteUserData = () => {
+export const deleteAllUsers = () => {
   User.remove({}, (err) => {
     if (err) {
       return console.log(err);
