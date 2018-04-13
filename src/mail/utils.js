@@ -98,8 +98,8 @@ export const lastNameVariants = [
 ];
 
 export const trimAndFindStoryEnd = emailText => {
-  if (emailText.includes('STORYEND')) {
-    emailText = emailText.substr(0, emailText.indexOf('STORYEND'));
+  if (emailText.includes(cmd.storyEnd)) {
+    emailText = emailText.substr(0, emailText.indexOf(cmd.storyEnd));
   }
   emailText = emailText.trim();
   return emailText;

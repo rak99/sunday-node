@@ -2,3 +2,11 @@ div {
   font-family: tahoma, sans-serif;
   font-size: small;
 }
+
+.u {
+  text-decoration: underline;
+}
+
+.i {
+  font-style: italic;
+}

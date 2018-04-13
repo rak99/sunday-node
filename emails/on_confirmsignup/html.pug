@@ -1,12 +1,22 @@
 include ../shared/story-top
 include ../shared/common
 
-div Hey,
+div Hey #{firstName},
 +br
-div You're fully signed up
+div Thanks for the info! You’re fully signed up to Sunday now.
 +br
-div - added #{addReaderEmailsHumanized} to your readers, and sent them an email checking that's OK.
+div To write your first story, send an email to write@sundaystori.es (or just reply to this one).
 +br
-div don't forget worth giving them a nudge to follow through
+div All the text in the email will be taken as your story (apart from your signature, which Sunday will ignore), as well as any picture you attach that’s at least 660 pixels wide.
 +br
-div now, to write a story is very simple. just do what we say
+div By the way, at some point you might want give the people you invited a little nudge to sign up fully, so that they won’t just be readers of your stories, but maybe write stories too.
++br
+div Here are the emails we added as your readers: #{addReaderEmailsHumanized}.
++br
+div Feel free to change these readers at any time by emailing in like this:
++br
+div #{cmd.addReader} example@addme.com
+div #{cmd.removeReader} anotherexample@removeme.com
++br
+div Yours,
+div Sunday

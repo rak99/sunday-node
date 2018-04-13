@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import Email from 'email-templates';
+import { cmd } from '../mail/commands';
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
@@ -12,6 +13,8 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendMail = (template, to, locals, inReplyTo, subject) => {
+  // Add commands for use
+  locals.cmd = cmd;
   // Create reusable transporter object using the default SMTP transport
   const email = new Email({
     message: {

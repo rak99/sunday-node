@@ -1,17 +1,28 @@
 include ../shared/story-top
 include ../shared/common
 
-div Hey,
+div Hey #{firstName},
 +br
-div Just to let you know, we've made the following changes:
+div Thanks for emailing us to tweak your Sunday 
+  if ((addReadersHumanized || removeReadersHumanized) && (removeWritersHumanized))
+  | writers and readers
+  else if removeWritersHumanized
+  | writers
+  else
+  | readers
+  | . Just to let you know, we've done the following:
 +br
 if addReadersHumanized
-  div - added #{addReadersHumanized} to your readers, and sent them an email checking that's OK.
+  div - added #{addReadersHumanized} to your readers, and let them know (or invited them, if they're new to Sunday)
   +br
 if removeReadersHumanized
-  div - removed #{removeReadersHumanized} from your readers, and let them know.
+  div - removed #{removeReadersHumanized} from your readers, and let them know
   +br
 if removeWritersHumanized
-  div - removed #{removeWritersHumanized} from your writers.
+  div - removed #{removeWritersHumanized} from your writers
   +br
-div Hope that's all cool!
+div That means that now, you 
+div Hope that's all good &mdash; if you want help from a real person, reply to this email writing 'SUNDAYHELP'.
++br
+div Cheers,
+div Sunday

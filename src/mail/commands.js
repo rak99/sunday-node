@@ -2,8 +2,9 @@
 export const cmd = {
   cancelStory: 'CANCELSTORY',
   removeReader: 'REMOVEREADER',
-  rejectFriendRequest: 'NOTHANKS',
+  rejectInvite: 'NOTHANKS',
   sundayHelp: 'SUNDAYHELP',
   addReader: 'ADDREADER',
   removeWriter: 'REMOVEWRITER', // TODO: got to use it
+  storyEnd: 'STORYEND',
 };

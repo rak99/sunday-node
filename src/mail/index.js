@@ -1,39 +1,40 @@
-import MailListener from 'mail-listener4';
-import _ from 'lodash';
+import crypto from 'crypto';
 import fs from 'fs';
-import parseReply from 'parse-reply';
-import moment from 'moment';
+import htmlToText from 'html-to-text';
+import Humanize from 'humanize-plus';
 import sizeOf from 'image-size';
+import _ from 'lodash';
+import MailListener from 'mail-listener4';
+import moment from 'moment';
+import replyParser from 'node-email-reply-parser';
+import parseReply from 'parse-reply';
 import sharp from 'sharp';
 import talon from 'talon';
-import crypto from 'crypto';
-import Humanize from 'humanize-plus';
-import replyParser from 'node-email-reply-parser';
-import htmlToText from 'html-to-text';
-import User from '../db/models/user';
-import Story from '../db/models/story';
-import { cmd } from '../mail/commands';
-import { deleteAllUsers } from '../db/actions/user';
 import { deleteAllStories, deleteStory } from '../db/actions/story';
+import { deleteAllUsers } from '../db/actions/user';
+import Story from '../db/models/story';
+import User from '../db/models/user';
+import { deleteFile, uploadAttachment } from '../mail/attachments';
+import { cmd } from '../mail/commands';
+import { sendMail } from '../mail/send';
 import {
-  searchName,
-  searchEmails,
   firstNameVariants,
+  imgMsgs,
   lastNameVariants,
   searchAddAndRemove,
+  searchEmails,
+  searchName,
   trimAndFindStoryEnd,
   unwrapPlainText,
-  imgMsgs,
 } from '../mail/utils';
-import uploadAttachment from '../mail/attachments';
-import { sendMail } from '../mail/send';
 
 const parseWithTalon = talon.signature.bruteforce.extractSignature;
+const amazonUrl = 'https://s3-eu-west-1.amazonaws.com/sundaystories/';
 
 // Testing utils
 const tests = fs.readdirSync('./emails/tests/');
 const deleteData = true;
-// const chooseTests = ['01', '03', '06', '13'];
+// const chooseTests = ['07'];
 const chooseTests = false;
 const testDelay = 10000;
 runTests();
@@ -41,7 +42,7 @@ runTests();
 function runTests() {
   if (deleteData) {
     // TODO: Make sure this setting is correct
-    deleteAllUsers();
+    deleteAllUsers(); // FIXME: these are DANGEROUS once Sunday is up and running
     deleteAllStories();
   }
   // Empty array to store tests starting with number
@@ -159,6 +160,20 @@ async function processMail(mail) {
 
       // If there is no firstName, ask for more info
       if (!firstName) {
+        // If help is needed
+        if (text.includes(cmd.sundayHelp)) {
+          // Forward it to my personal inbox
+          sendMail('on_help', 'louis.barclay@gmail.com', {
+            firstName: 'Unknown',
+            lastName: 'Unknown',
+            email,
+            text,
+          });
+          // Reply saying help is on the way
+          sendMail('on_helpconfirm', email, {}, mail.messageId, mail.subject);
+          return;
+        }
+
         // Search for a writer remove request before asking for more info
         if (text.includes(cmd.removeWriter)) {
           console.log(`${email}: found removeWriter command`);
@@ -182,23 +197,24 @@ async function processMail(mail) {
                 'on_removewriter',
                 email,
                 { firstName, lastName, removeWritersHumanized },
-                idOfEmailer,
+                mail.messageId,
+                mail.subject,
               );
               console.log(`${email}: removeWriter - done for ${removeWritersHumanized}`);
             } else {
               // Should be optimised - duplicate with below
               console.log(`${email}: removeWriter but no valid emails!`);
-              sendMail('on_removewriterfail', email, { command: cmd.removeWriter }, idOfEmailer);
+              sendMail('on_removewriterfail', email, {}, mail.messageId, mail.subject);
             }
           } else {
             console.log(`${email}: removeWriter but no emails!`);
-            sendMail('on_removewriterfail', email, { command: cmd.removeWriter }, idOfEmailer);
+            sendMail('on_removewriterfail', email, {}, mail.messageId, mail.subject);
           }
           return;
         }
 
         // Search for a rejected friend request before asking for more info
-        if (text.includes(cmd.rejectFriendRequest)) {
+        if (text.includes(cmd.rejectInvite)) {
           // Assuming there is a referral email (always should be, send 'on_rejectinvite')
           if (findUser.referredBy !== 'direct') {
             console.log(
@@ -206,7 +222,7 @@ async function processMail(mail) {
                 findUser.referredBy
               })`,
             );
-            sendMail('on_rejectinvite', findUser.referredBy, {});
+            sendMail('on_rejectinvite', findUser.referredBy, { email });
           }
           User.remove({ email }, (err) => {
             if (err) {
@@ -274,9 +290,10 @@ async function processMail(mail) {
 
         // If help is needed
         if (text.includes(cmd.sundayHelp)) {
-          // FIXME: not yet tested
           // Forward it to my personal inbox
+          sendMail('on_help', 'louis.barclay@gmail.com', { firstName, lastName, text });
           // Reply saying help is on the way
+          sendMail('on_helpconfirm', email, {}, mail.messageId, mail.subject);
           return;
         }
 
@@ -388,6 +405,7 @@ async function processMail(mail) {
               'on_confirmaccountchanges',
               email,
               {
+                firstName,
                 addReadersHumanized,
                 removeReadersHumanized,
                 removeWritersHumanized,
@@ -517,11 +535,12 @@ async function processMail(mail) {
 
         // If image exists, append URL
         if (storyImgFileName) {
-          storyImgFileName = `https://s3-eu-west-1.amazonaws.com/sundaystories/${storyImgFileName}`;
+          storyImgFileName = `${amazonUrl}${storyImgFileName}`;
         }
 
         // Check if we should create a new story or just update
         let noStoryYetThisWeek = true;
+        let existingImgUrl = false;
         if (currentStoryId && currentStoryId !== '') {
           const currentStory = await Story.findOne(
             { _id: currentStoryId },
@@ -538,6 +557,8 @@ async function processMail(mail) {
                 .format()
             ) {
               noStoryYetThisWeek = false;
+              // Grab existing image URL to delete it later
+              existingImgUrl = currentStory.imageUrl;
             }
           }
         }
@@ -570,6 +591,10 @@ async function processMail(mail) {
             { text: storyText, imageUrl: storyImgFileName, timeCreated: moment().format() },
             { multi: true },
           );
+          // Delete existing photo
+          const key = existingImgUrl.replace(amazonUrl, '');
+          deleteFile(key);
+          // Log update
           console.log(`${email}: story update (${updateStory.nModified} update)`);
         }
 
@@ -646,7 +671,9 @@ async function removeWriters(
         if (findRemoveWriter) {
           // Add to array of ids to remove
           removeWriterIds.push(findRemoveWriter.id.toString());
-          successArray.push(`${findRemoveWriter.firstName} ${findRemoveWriter.lastName} (${removeWriterEmail})`);
+          successArray.push(
+            `${findRemoveWriter.firstName} ${findRemoveWriter.lastName} (${removeWriterEmail})`,
+          );
           // Send email saying 'X has added you. If not cool, let us know'
           sendMail('on_removedaswriter', removeWriterEmail, {
             firstName,
@@ -703,9 +730,7 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
           const writerIds = findReferredUser.writerIds;
           if (writerIds.indexOf(id.toString()) > -1) {
             // Do nothing
-            console.log(
-              `${email}: addReader - ${addReaderEmail} already a reader`,
-            );
+            console.log(`${email}: addReader - ${addReaderEmail} already a reader`);
           } else {
             writerIds.push(id.toString());
             const updateWriterIds = await User.update(
@@ -717,11 +742,15 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
               `${email}: addReader - ${addReaderEmail} (${updateWriterIds.nModified} update)`,
             );
             // Send email saying 'X has added you. If not cool, let us know'
+            let referredUserFirstName = false;
+            if (!_.isUndefined(findReferredUser.firstName)) {
+              referredUserFirstName = findReferredUser.firstName;
+            }
             sendMail('on_receivefriendrequest', addReaderEmail, {
+              referredUserFirstName,
               firstName,
               lastName,
               email,
-              other: cmd.rejectFriendRequest,
             });
           }
           if (_.isUndefined(findReferredUser.firstName)) {
@@ -768,7 +797,7 @@ const listener = {
       processMail(mail);
       fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
         if (err) console.log(err);
-        else console.log('Email saved');
+        else console.log('>>>>>>>> Email saved >>>>>>>>');
       });
     });
 
