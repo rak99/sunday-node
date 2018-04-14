@@ -2,8 +2,11 @@ include ../shared/story-top
 include ../shared/common
 include ../shared/story-content
 
+if firstName
+  div Hey 
+
 each val in stories
-  +textArea(val[0], val[1], val[2])
+  +textArea(val.name, val.day, val.text)
   +br
-  if val[3]
-    +image(val[3])
+  if val.imageUrl
+    +image(val.imageUrl)

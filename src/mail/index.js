@@ -10,6 +10,7 @@ import replyParser from 'node-email-reply-parser';
 import parseReply from 'parse-reply';
 import sharp from 'sharp';
 import talon from 'talon';
+import schedule from 'node-schedule';
 import { deleteAllStories, deleteStory } from '../db/actions/story';
 import { deleteAllUsers } from '../db/actions/user';
 import Story from '../db/models/story';
@@ -37,7 +38,101 @@ const deleteData = true;
 // const chooseTests = ['07'];
 const chooseTests = false;
 const testDelay = 10000;
-runTests();
+// runTests();
+
+const sundaySchedule = schedule.scheduleJob('0 12 * * 0', () => {
+  sundaySend();
+});
+
+sundaySend();
+
+async function sundaySend() {
+  try {
+    // Bring up all users, who have any writerIds
+    const findAll = await User.find({});
+    // Define writers object which we will add to in order to save resources
+    const allStories = {};
+    // Go through all users
+    await Promise.all(
+      findAll.map(async (user) => {
+        const userStories = [];
+        // If they have any writers
+        if (user.writerIds.length > 0) {
+          // Look at all of their writers in turn
+          await Promise.all(
+            user.writerIds.map(async (writerId) => {
+              if (!_.isUndefined(allStories[writerId])) {
+                // If we already got that writer and story, don't request again
+                // But do add to userStories array if there is a story for that writer
+                if (allStories[writerId]) {
+                  userStories.push(allStories[writerId]);
+                }
+              } else {
+                // Find writer
+                const writer = await User.findOne(
+                  { _id: writerId },
+                  'firstName lastName currentStoryId',
+                );
+                let story = false;
+                // Find out if they have a current story
+                if (writer.currentStoryId !== '') {
+                  const currentStory = await Story.findOne(
+                    { _id: writer.currentStoryId },
+                    'text imageUrl weekCommencing timeCreated',
+                  );
+                  // If they have a current story
+                  if (currentStory) {
+                    // Check if it's from this week
+                    if (
+                      currentStory.weekCommencing ===
+                      moment()
+                        .subtract(1, 'days')
+                        .startOf('week')
+                        .hour(12)
+                        .format()
+                    ) {
+                      // There is a story this week so we define it
+                      story = {
+                        name: `${writer.firstName} ${writer.lastName}`,
+                        day: moment(currentStory.timeCreated).format('dddd'),
+                        text: currentStory.text.split('\n'),
+                        imageUrl: currentStory.imageUrl, // FIXME: needs checking
+                      };
+                    }
+                  }
+                }
+                // Add story (or false) to writerId
+                allStories[writerId] = story;
+                // If there is a story, add story to array of stories for this user
+                if (story) {
+                  userStories.push(allStories[writerId]);
+                }
+              }
+            }),
+          );
+          if (userStories.length > 0) {
+            console.log('***USER AND THEIR STORIES***');
+            if (_.isUndefined(user.firstName)) {
+              console.log(`Unnamed user (${user._id})`);
+            } else {
+              console.log(`${user.firstName} (${user._id})`);
+            }
+            userStories.forEach((story) => {
+              console.log(story.text[0].substring(0, 30));
+              console.log(story.imageUrl);
+              console.log(story.day);
+              console.log(story.name);
+            });
+            // send userStories
+          }
+        }
+      }),
+    );
+    console.log(allStories);
+  } catch (e) {
+    console.log(e);
+  }
+}
 
 function runTests() {
   if (deleteData) {
@@ -99,13 +194,6 @@ const mailListener = new MailListener({
   attachments: true, // download attachments as they are encountered to the project directory
   attachmentOptions: { directory: 'attachments/' }, // specify a download directory for attachments
 });
-
-// URL format is here:
-// https://s3-eu-west-1.amazonaws.com/sundaystories/ladbrokesq.PNG
-// https://s3-eu-west-1.amazonaws.com/sundaystories/lenblavatnik+school+of+govt.PNG
-// https://s3-eu-west-1.amazonaws.com/sundaystories/testfile
-// how does email work. if you don't attach - just link - will that image disappear after?
-// how does mailSender work. can you attach? how does that all go down?
 
 async function processMail(mail) {
   try {
@@ -421,7 +509,7 @@ async function processMail(mail) {
 
         // If cancelling story
         if (text.includes(cmd.cancelStory)) {
-          if (currentStoryId) {
+          if (currentStoryId !== '' && currentStoryId) {
             const currentStory = await Story.findOne({ _id: currentStoryId }, 'weekCommencing');
             if (currentStory) {
               // If there is any currentStory at all (might not be)
@@ -629,12 +717,12 @@ async function processMail(mail) {
             readersHumanized,
             confirmMsg,
             stories: [
-              [
-                `${firstName} ${lastName}`,
-                moment().format('dddd'),
-                storyTextArray,
-                storyImgFileName,
-              ],
+              {
+                name: `${firstName} ${lastName}`,
+                day: moment().format('dddd'),
+                text: storyTextArray,
+                imageUrl: storyImgFileName,
+              },
             ],
           },
           mail.messageId,
