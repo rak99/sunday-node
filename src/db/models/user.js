@@ -8,9 +8,13 @@ const userSchema = Schema({
   referredBy: String,
   timeCreated: String,
   currentStoryId: String,
+  lastSentSunday: String,
 });
 
 userSchema.index({ name: 'text', writerIds: 'text' });
+
+// if config dev mode
+// don't allow deleting
 
 const User = mongoose.model('User', userSchema);
 

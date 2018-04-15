@@ -3,10 +3,13 @@ include ../shared/common
 include ../shared/story-content
 
 if firstName
-  div Hey 
-
-each val in stories
-  +textArea(val.name, val.day, val.text)
+  div Hey #{firstName}, happy Sunday! Here are your stories.
+else
+  div Happy Sunday! Here are your stories.
++br
+each val, index in stories
+  +textArea(index + 1, val.name, val.day, val.text)
   +br
   if val.imageUrl
     +image(val.imageUrl)
+    +br

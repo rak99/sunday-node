@@ -97,7 +97,7 @@ export const lastNameVariants = [
   'lastname',
 ];
 
-export const trimAndFindStoryEnd = emailText => {
+export const trimAndFindStoryEnd = (emailText) => {
   if (emailText.includes(cmd.storyEnd)) {
     emailText = emailText.substr(0, emailText.indexOf(cmd.storyEnd));
   }
@@ -105,11 +105,18 @@ export const trimAndFindStoryEnd = emailText => {
   return emailText;
 };
 
-export const unwrapPlainText = plainText => {
+export const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+};
+
+export const unwrapPlainText = (plainText) => {
   const array = plainText.split('\n');
   // Find current max line length
   let max = 0;
-  array.forEach(item => {
+  array.forEach((item) => {
     if (item.length > max) {
       max = item.length;
     }

@@ -1,14 +1,12 @@
-import nodemailer from 'nodemailer';
 import Email from 'email-templates';
 import { cmd } from '../mail/commands';
+import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // secure:true for port 465, secure:false for port 587
+  service: 'postmark',
   auth: {
-    user: 'louis@sundaystori.es',
-    pass: 'sundaystories1989', // should not have this here
+    user: '2d4cecb2-6b78-4d38-9a07-5f0878b3f557',
+    pass: '2d4cecb2-6b78-4d38-9a07-5f0878b3f557', // should not have this here
   },
 });
 
@@ -18,11 +16,11 @@ export const sendMail = (template, to, locals, inReplyTo, subject) => {
   // Create reusable transporter object using the default SMTP transport
   const email = new Email({
     message: {
-      from: '"Sunday Stories" <louis@sundaystori.es>',
+      from: '"Sunday" <write@sundaystori.es>',
     },
-    send: false,
+    send: true,
     transport: transporter,
-    preview: true, // Toggle here to avoid annoying popup
+    preview: false, // Toggle here to avoid annoying popup
   });
 
   email

@@ -5,11 +5,11 @@ div Hey #{firstName},
 +br
 div Thanks for emailing us to tweak your Sunday 
   if ((addReadersHumanized || removeReadersHumanized) && (removeWritersHumanized))
-  | writers and readers
+    | writers and readers
   else if removeWritersHumanized
-  | writers
+    | writers
   else
-  | readers
+    | readers
   | . Just to let you know, we've done the following:
 +br
 if addReadersHumanized
@@ -21,7 +21,6 @@ if removeReadersHumanized
 if removeWritersHumanized
   div - removed #{removeWritersHumanized} from your writers
   +br
-div That means that now, you 
 div Hope that's all good &mdash; if you want help from a real person, reply to this email writing 'SUNDAYHELP'.
 +br
 div Cheers,

@@ -1,12 +1,13 @@
 //- Text area
-mixin textArea(name, day, text)
+mixin textArea(index, name, day, text)
   div
     u
+      //- =index
+      //- | . 
       =name
-      | , on 
+      | , written on 
       =day
-  div
-    br
+  +br
   each val in text
     if (val === '')
       +br

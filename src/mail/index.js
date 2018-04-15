@@ -11,6 +11,7 @@ import parseReply from 'parse-reply';
 import sharp from 'sharp';
 import talon from 'talon';
 import schedule from 'node-schedule';
+import converter from 'number-to-words';
 import { deleteAllStories, deleteStory } from '../db/actions/story';
 import { deleteAllUsers } from '../db/actions/user';
 import Story from '../db/models/story';
@@ -27,108 +28,169 @@ import {
   searchName,
   trimAndFindStoryEnd,
   unwrapPlainText,
+  shuffleArray,
 } from '../mail/utils';
 
 const parseWithTalon = talon.signature.bruteforce.extractSignature;
 const amazonUrl = 'https://s3-eu-west-1.amazonaws.com/sundaystories/';
 
-// Testing utils
+// FIXME: new test mode which can be used even while normal Sunday is running
+
+// Testing
 const tests = fs.readdirSync('./emails/tests/');
 const deleteData = true;
-// const chooseTests = ['07'];
+// const chooseTests = ['01', '03', '15'];
 const chooseTests = false;
 const testDelay = 10000;
-// runTests();
+runTests();
 
-const sundaySchedule = schedule.scheduleJob('0 12 * * 0', () => {
+const sundaySchedule = schedule.scheduleJob('0 12-15 * * 0', () => {
+  console.log('Scheduled job started');
   sundaySend();
 });
 
-sundaySend();
+// const sundayScheduleTest = schedule.scheduleJob('31-35 1 * * 0', () => {
+//   sundaySend();
+//   console.log('ACTIVATED');
+// });
+
+// sundaySend();
 
 async function sundaySend() {
   try {
+    console.log(`>>>>>>>> Start Sunday send at ${moment().format('h:mm:ss a, dddd MMMM Do YYYY')}`);
     // Bring up all users, who have any writerIds
     const findAll = await User.find({});
-    // Define writers object which we will add to in order to save resources
+    // Define allStories object which we will add to in order to cache and save resources
     const allStories = {};
     // Go through all users
     await Promise.all(
       findAll.map(async (user) => {
-        const userStories = [];
-        // If they have any writers
-        if (user.writerIds.length > 0) {
-          // Look at all of their writers in turn
-          await Promise.all(
-            user.writerIds.map(async (writerId) => {
-              if (!_.isUndefined(allStories[writerId])) {
-                // If we already got that writer and story, don't request again
-                // But do add to userStories array if there is a story for that writer
-                if (allStories[writerId]) {
-                  userStories.push(allStories[writerId]);
-                }
-              } else {
-                // Find writer
-                const writer = await User.findOne(
-                  { _id: writerId },
-                  'firstName lastName currentStoryId',
-                );
-                let story = false;
-                // Find out if they have a current story
-                if (writer.currentStoryId !== '') {
-                  const currentStory = await Story.findOne(
-                    { _id: writer.currentStoryId },
-                    'text imageUrl weekCommencing timeCreated',
+        // See if lastSentSunday is today, i.e. has already sent
+        if (!_.isUndefined(user.lastSentSunday) && user.lastSentSunday === moment().startOf('day').hour(12).format()) {
+          console.log(`${user.email}: already sent Sunday this week`);
+        } else {
+          const userStories = [];
+          // If they have any writers
+          if (user.writerIds.length > 0) {
+            // Look at all of their writers in turn
+            await Promise.all(
+              user.writerIds.map(async (writerId) => {
+                if (!_.isUndefined(allStories[writerId])) {
+                  // If we already got that writer and story, don't request again
+                  // But do add to userStories array if there is a story for that writer
+                  if (allStories[writerId]) {
+                    userStories.push(allStories[writerId]);
+                  }
+                } else {
+                  // Find writer
+                  const writer = await User.findOne(
+                    { _id: writerId },
+                    'firstName lastName currentStoryId',
                   );
-                  // If they have a current story
-                  if (currentStory) {
-                    // Check if it's from this week
-                    if (
-                      currentStory.weekCommencing ===
-                      moment()
-                        .subtract(1, 'days')
-                        .startOf('week')
-                        .hour(12)
-                        .format()
-                    ) {
-                      // There is a story this week so we define it
-                      story = {
-                        name: `${writer.firstName} ${writer.lastName}`,
-                        day: moment(currentStory.timeCreated).format('dddd'),
-                        text: currentStory.text.split('\n'),
-                        imageUrl: currentStory.imageUrl, // FIXME: needs checking
-                      };
+                  let story = false;
+                  // Find out if they have a current story
+                  if (writer.currentStoryId !== '') {
+                    const currentStory = await Story.findOne(
+                      { _id: writer.currentStoryId },
+                      'text imageUrl weekCommencing timeCreated',
+                    );
+                    // If they have a current story
+                    if (currentStory) {
+                      // Check if it's from this week
+                      if (
+                        currentStory.weekCommencing ===
+                        moment()
+                          // Go to yesterday and find start of week
+                          .subtract(1, 'days')
+                          .startOf('week')
+                          .hour(12)
+                          .format()
+                      ) {
+                        // There is a story this week so we define it
+                        story = {
+                          firstName: writer.firstName,
+                          name: `${writer.firstName} ${writer.lastName}`,
+                          day: moment(currentStory.timeCreated).format('dddd'),
+                          text: currentStory.text.split(/[\n\r]/),
+                          imageUrl: currentStory.imageUrl,
+                        };
+                      } else {
+                        console.log(`No story this week (current story is ${currentStory.weekCommencing}, and now is ${moment()
+                          .subtract(1, 'days')
+                          .startOf('week')
+                          .hour(12)
+                          .format()})`);
+                      }
                     }
                   }
+                  // Add story (or false) to writerId
+                  allStories[writerId] = story;
+                  // If there is a story, add story to array of stories for this user
+                  if (story) {
+                    userStories.push(allStories[writerId]);
+                  }
                 }
-                // Add story (or false) to writerId
-                allStories[writerId] = story;
-                // If there is a story, add story to array of stories for this user
-                if (story) {
-                  userStories.push(allStories[writerId]);
-                }
+              }),
+            );
+            if (userStories.length > 0) {
+              let firstName = false;
+              if (_.isUndefined(user.firstName)) {
+                console.log(`\n>>>>>>>> Recipient is ${user.email} (${user._id})`);
+              } else {
+                firstName = user.firstName;
+                console.log(
+                  `\n>>>>>>>> Recipient is ${user.firstName} ${user.firstName} (${user.email}, ${
+                    user._id
+                  })`,
+                );
               }
-            }),
-          );
-          if (userStories.length > 0) {
-            console.log('***USER AND THEIR STORIES***');
-            if (_.isUndefined(user.firstName)) {
-              console.log(`Unnamed user (${user._id})`);
-            } else {
-              console.log(`${user.firstName} (${user._id})`);
+              const storyNames = [];
+              userStories.forEach((story, i) => {
+                storyNames.push(story.firstName);
+                // console.log(`${i + 1}: ${story.name}'s story`);
+                // console.log(`Day: ${story.day}`);
+                // console.log(`Text: ${story.text[0].substring(0, 30)}`);
+                // console.log(`Image URL: ${story.imageUrl}`);
+              });
+              // Randomise order of storyNames
+              shuffleArray(storyNames);
+              let sundayStoriesSubjectLine = `${moment().format('dddd Do MMMM')}: a story from ${
+                storyNames[0]
+              }`;
+              if (storyNames.length > 1 && storyNames.length < 4) {
+                sundayStoriesSubjectLine = `${moment().format(
+                  'dddd Do MMMM',
+                )}: stories from ${Humanize.oxford(storyNames)}`;
+              } else {
+                sundayStoriesSubjectLine = `${moment().format(
+                  'dddd Do MMMM',
+                )}: stories from ${Humanize.oxford(storyNames.slice(0, 3))} and ${converter.toWords(
+                  storyNames.length - 3,
+                )} more`;
+              }
+              sendMail('on_sunday', user.email, {
+                stories: userStories,
+                firstName,
+                sundayStoriesSubjectLine,
+              });
+              // Update user with lastSentSunday
+              const updateLastSentSunday = await User.update(
+                { email: user.email },
+                { lastSentSunday: moment().startOf('day').hour(12).format() },
+                { multi: true },
+              );
+              console.log(
+                `${user.email}: successfully sent Sunday (${
+                  updateLastSentSunday.nModified
+                } update)`,
+              );
             }
-            userStories.forEach((story) => {
-              console.log(story.text[0].substring(0, 30));
-              console.log(story.imageUrl);
-              console.log(story.day);
-              console.log(story.name);
-            });
-            // send userStories
           }
         }
       }),
     );
-    console.log(allStories);
+    console.log(`>>>>>>>> Finish Sunday send at ${moment().format('h:mm:ss a, dddd MMMM Do YYYY')}`);
   } catch (e) {
     console.log(e);
   }
@@ -136,7 +198,6 @@ async function sundaySend() {
 
 function runTests() {
   if (deleteData) {
-    // TODO: Make sure this setting is correct
     deleteAllUsers(); // FIXME: these are DANGEROUS once Sunday is up and running
     deleteAllStories();
   }
@@ -197,7 +258,13 @@ const mailListener = new MailListener({
 
 async function processMail(mail) {
   try {
+    console.log(mail.to[0].address); // FIXME: 
     const email = mail.from[0].address;
+    // Emails to ignore
+    if (email.includes('postmarkapp.com')) {
+      console.log(`${email}: emailed - ignored`);
+      return;
+    }
     console.log(`${email}: emailed`);
 
     // Look up user record from email
@@ -441,6 +508,8 @@ async function processMail(mail) {
                     } else {
                       removeReadersSuccess.push(`${firstName} ${lastName} (${removeReaderEmail})`);
                     }
+                  } else {
+                    console.log(`${email}: removeReader - reader never had user in writerIds`);
                   }
                   const updateWriterIds = await User.update(
                     { email: removeReaderEmail },
@@ -517,6 +586,7 @@ async function processMail(mail) {
               if (
                 currentStory.weekCommencing ===
                 moment()
+                  .subtract(12, 'hours')
                   .startOf('week')
                   .hour(12)
                   .format()
@@ -640,6 +710,7 @@ async function processMail(mail) {
             if (
               currentStory.weekCommencing ===
               moment()
+                .subtract(12, 'hours')
                 .startOf('week')
                 .hour(12)
                 .format()
@@ -658,6 +729,8 @@ async function processMail(mail) {
             imageUrl: storyImgFileName,
             timeCreated: moment().format(),
             weekCommencing: moment()
+              // The deadline is 12 on Sunday TODO: should probably sync to the Sunday send schedule
+              .subtract(12, 'hours')
               .startOf('week')
               .hour(12)
               .format(),
@@ -705,7 +778,7 @@ async function processMail(mail) {
         console.log(`${email}: confirm readers - ${readersHumanized}`);
 
         // Turn story text into array for inserting into template
-        const storyTextArray = storyText.split('\n');
+        const storyTextArray = storyText.split(/[\n\r]/);
 
         // Send confirmation TODO: use this for Sunday too
         sendMail(
@@ -754,25 +827,33 @@ async function removeWriters(
       } else {
         const findRemoveWriter = await User.findOne(
           { email: removeWriterEmail },
-          'email firstName lastName writerIds',
+          'email firstName lastName',
         );
+        // If writer to be removed exists
         if (findRemoveWriter) {
-          // Add to array of ids to remove
-          removeWriterIds.push(findRemoveWriter.id.toString());
-          successArray.push(
-            `${findRemoveWriter.firstName} ${findRemoveWriter.lastName} (${removeWriterEmail})`,
-          );
-          // Send email saying 'X has added you. If not cool, let us know'
-          sendMail('on_removedaswriter', removeWriterEmail, {
-            firstName,
-            lastName,
-            email,
-          });
-          console.log(
-            `${email}: removeWriter ${findRemoveWriter.firstName} ${
-              findRemoveWriter.lastName
-            } and notify`,
-          );
+          // And if that writer is actually in our user's writers
+          if (writerIds.indexOf(findRemoveWriter.id.toString()) > -1) {
+            removeWriterIds.push(findRemoveWriter.id.toString());
+            // Add to array of ids to remove
+            successArray.push(
+              `${findRemoveWriter.firstName} ${findRemoveWriter.lastName} (${removeWriterEmail})`,
+            );
+            // Send email saying 'X has removed you. If not cool, let us know'
+            sendMail('on_removedaswriter', removeWriterEmail, {
+              firstName,
+              lastName,
+              email,
+            });
+            console.log(
+              `${email}: removeWriter ${findRemoveWriter.firstName} ${
+                findRemoveWriter.lastName
+              } and notify`,
+            );
+          } else {
+            console.log(
+              `${email}: removeWriter - ${removeWriterEmail} already not a writer for user`,
+            );
+          }
         }
       }
     }),
@@ -816,6 +897,7 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
           );
           // Add to writerIds
           const writerIds = findReferredUser.writerIds;
+          // If this reader already has our user as a writer
           if (writerIds.indexOf(id.toString()) > -1) {
             // Do nothing
             console.log(`${email}: addReader - ${addReaderEmail} already a reader`);
