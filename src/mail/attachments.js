@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import awsconfig from '../awsconfig.json';
+import awsconfig from '../../awsconfig.json';
 
 /** Load Config File */
 const config = new AWS.Config(awsconfig);
