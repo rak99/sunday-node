@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import config from '../../config.json';
 
 const userSchema = Schema({
   firstName: String,
@@ -13,9 +14,12 @@ const userSchema = Schema({
 
 userSchema.index({ name: 'text', writerIds: 'text' });
 
-// if config dev mode
-// don't allow deleting
+let userModelName = 'User';
 
-const User = mongoose.model('User', userSchema);
+if (config.dev) {
+  userModelName = 'test-User';
+}
+
+const User = mongoose.model(userModelName, userSchema);
 
 export default User;

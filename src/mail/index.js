@@ -12,6 +12,7 @@ import sharp from 'sharp';
 import talon from 'talon';
 import schedule from 'node-schedule';
 import converter from 'number-to-words';
+import config from '../config.json';
 import { deleteAllStories, deleteStory } from '../db/actions/story';
 import { deleteAllUsers } from '../db/actions/user';
 import Story from '../db/models/story';
@@ -32,7 +33,6 @@ import {
 } from '../mail/utils';
 
 const parseWithTalon = talon.signature.bruteforce.extractSignature;
-const amazonUrl = 'https://s3-eu-west-1.amazonaws.com/sundaystories/';
 
 // FIXME: new test mode which can be used even while normal Sunday is running
 
@@ -238,8 +238,8 @@ function runTests() {
 }
 
 const mailListener = new MailListener({
-  username: 'louis@sundaystori.es',
-  password: 'sundaystories1989',
+  username: config.username,
+  password: config.password,
   host: 'imap.gmail.com',
   port: 993,
   tls: true,
@@ -258,7 +258,10 @@ const mailListener = new MailListener({
 
 async function processMail(mail) {
   try {
-    console.log(mail.to[0].address); // FIXME: 
+    const to = mail.to[0].address;
+    if (to !== 'write@sundaystori.es') {
+      return;
+    }
     const email = mail.from[0].address;
     // Emails to ignore
     if (email.includes('postmarkapp.com')) {
@@ -693,7 +696,7 @@ async function processMail(mail) {
 
         // If image exists, append URL
         if (storyImgFileName) {
-          storyImgFileName = `${amazonUrl}${storyImgFileName}`;
+          storyImgFileName = `${config.s3}${storyImgFileName}`;
         }
 
         // Check if we should create a new story or just update
@@ -753,7 +756,7 @@ async function processMail(mail) {
             { multi: true },
           );
           // Delete existing photo
-          const key = existingImgUrl.replace(amazonUrl, '');
+          const key = existingImgUrl.replace(config.s3, '');
           deleteFile(key);
           // Log update
           console.log(`${email}: story update (${updateStory.nModified} update)`);
@@ -965,10 +968,16 @@ const listener = {
 
     mailListener.on('mail', (mail, seqno, attributes) => {
       processMail(mail);
-      fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
-        if (err) console.log(err);
-        else console.log('>>>>>>>> Email saved >>>>>>>>');
-      });
+
+      // Save all emails to louis@sundaystori.es
+      // They will have to have their 'to' address changed to work as tests
+      const to = mail.to[0].address;
+      if (to === 'louis@sundaystori.es') {
+        fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
+          if (err) console.log(err);
+          else console.log('>>>>>>>> Email saved >>>>>>>>');
+        });
+      }
     });
 
     mailListener.on('error', (err) => {

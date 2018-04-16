@@ -1,12 +1,13 @@
 import Email from 'email-templates';
 import { cmd } from '../mail/commands';
 import nodemailer from 'nodemailer';
+import config from '../config.json';
 
 const transporter = nodemailer.createTransport({
   service: 'postmark',
   auth: {
-    user: '2d4cecb2-6b78-4d38-9a07-5f0878b3f557',
-    pass: '2d4cecb2-6b78-4d38-9a07-5f0878b3f557', // should not have this here
+    user: config.postmark,
+    pass: config.postmark,
   },
 });
 
@@ -18,9 +19,9 @@ export const sendMail = (template, to, locals, inReplyTo, subject) => {
     message: {
       from: '"Sunday" <write@sundaystori.es>',
     },
-    send: true,
+    send: false,
     transport: transporter,
-    preview: false, // Toggle here to avoid annoying popup
+    preview: true, // Toggle here to avoid annoying popup
   });
 
   email

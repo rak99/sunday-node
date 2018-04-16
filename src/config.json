@@ -1,7 +1,10 @@
 {
-	"port": 8080,
-	"bodyLimit": "100kb",
-	"corsHeaders": ["Link"],
-	"dev": true,
-	
+  "port": 8080,
+  "bodyLimit": "100kb",
+  "corsHeaders": ["Link"],
+  "dev": true,
+  "postmark": "2d4cecb2-6b78-4d38-9a07-5f0878b3f557",
+  "s3": "https://s3-eu-west-1.amazonaws.com/sundaystories/",
+  "username": "louis@sundaystori.es",
+  "password": "sundaystories1989"
 }
