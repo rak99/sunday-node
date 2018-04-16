@@ -1,7 +1,8 @@
 import AWS from 'aws-sdk';
+import awsconfig from '../awsconfig.json';
 
 /** Load Config File */
-AWS.config.loadFromPath('../../awsconfig.json');
+const config = new AWS.Config(awsconfig);
 
 const s3 = new AWS.S3();
 const sundayBucket = 'sundaystories';
