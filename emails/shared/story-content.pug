@@ -1,6 +1,6 @@
 //- Text area
 mixin textArea(index, name, day, text)
-  div
+  div.d
     u
       //- =index
       //- | . 
@@ -12,7 +12,7 @@ mixin textArea(index, name, day, text)
     if (val === '')
       +br
     else
-      div=val
+      div.d=val
 
 //- Image
 mixin image(url)

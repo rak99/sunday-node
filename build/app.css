@@ -1,6 +1,10 @@
-div {
+.d {
   font-family: tahoma, sans-serif;
   font-size: small;
+  /* width: 100%;
+  margin-left: 0;
+  margin-top: 0;
+  margin-right: 0; */
 }
 
 .u {
@@ -10,3 +14,5 @@ div {
 .i {
   font-style: italic;
 }
+
+/* body(leftmargin='0', topmargin='0', rightmargin='0', bgcolor='#ffffff', style='width:100%;') */

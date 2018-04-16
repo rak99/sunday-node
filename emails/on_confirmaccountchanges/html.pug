@@ -1,9 +1,9 @@
 include ../shared/other-top
 include ../shared/common
 
-div Hey #{firstName},
+div.d Hey #{firstName},
 +br
-div Thanks for emailing us to tweak your Sunday 
+div.d Thanks for emailing us to tweak your Sunday 
   if ((addReadersHumanized || removeReadersHumanized) && (removeWritersHumanized))
     | writers and readers
   else if removeWritersHumanized
@@ -13,15 +13,15 @@ div Thanks for emailing us to tweak your Sunday
   | . Just to let you know, we've done the following:
 +br
 if addReadersHumanized
-  div - added #{addReadersHumanized} to your readers, and let them know (or invited them, if they're new to Sunday)
+  div.d - added #{addReadersHumanized} to your readers, and let them know (or invited them, if they're new to Sunday)
   +br
 if removeReadersHumanized
-  div - removed #{removeReadersHumanized} from your readers, and let them know
+  div.d - removed #{removeReadersHumanized} from your readers, and let them know
   +br
 if removeWritersHumanized
-  div - removed #{removeWritersHumanized} from your writers
+  div.d - removed #{removeWritersHumanized} from your writers
   +br
-div Hope that's all good &mdash; if you want help from a real person, reply to this email writing 'SUNDAYHELP'.
+div.d Hope that's all good &mdash; if you want help from a real person, reply to this email writing 'SUNDAYHELP'.
 +br
-div Cheers,
-div Sunday
+div.d Cheers,
+div.d Sunday

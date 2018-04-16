@@ -3,9 +3,9 @@ include ../shared/common
 include ../shared/story-content
 
 if firstName
-  div Hey #{firstName}, happy Sunday! Here are your stories.
+  div.d Hey #{firstName}, happy Sunday! Here are your stories.
 else
-  div Happy Sunday! Here are your stories.
+  div.d Happy Sunday! Here are your stories.
 +br
 each val, index in stories
   +textArea(index + 1, val.name, val.day, val.text)
