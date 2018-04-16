@@ -4,5 +4,4 @@
 /node_modules
 .DS_Store
 /attachments
-/src/awsconfig.json
 /deprecated
