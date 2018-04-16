@@ -11,6 +11,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Don't ever let previews happen in live mode
+if (!config.dev) {
+  config.preview = false;
+}
+
 export const sendMail = (template, to, locals, inReplyTo, subject) => {
   // Add commands for use
   locals.cmd = cmd;
@@ -19,9 +24,9 @@ export const sendMail = (template, to, locals, inReplyTo, subject) => {
     message: {
       from: '"Sunday" <write@sundaystori.es>',
     },
-    send: true,
+    send: config.send,
     transport: transporter,
-    preview: true, // Toggle here to avoid annoying popup
+    preview: config.preview, // Toggle here to avoid annoying popup
   });
 
   email

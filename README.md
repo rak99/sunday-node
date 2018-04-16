@@ -10,3 +10,4 @@ Check:
 - dev mode 'false' when running live
 - emails set to send
 - recording logs, and not storing
+- manually upload config files with keys (awsconfig.json and config.json)

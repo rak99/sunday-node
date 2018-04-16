@@ -34,27 +34,18 @@ import {
 
 const parseWithTalon = talon.signature.bruteforce.extractSignature;
 
-// FIXME: new test mode which can be used even while normal Sunday is running
-
 // Testing
 const tests = fs.readdirSync('./emails/tests/');
-const deleteData = true;
-const chooseTests = ['01', '03', '06'];
-// const chooseTests = false;
 const testDelay = 10000;
-runTests();
+
+if (config.test) {
+  runTests();
+}
 
 const sundaySchedule = schedule.scheduleJob('0 12-15 * * 0', () => {
   console.log('Scheduled job started');
   sundaySend();
 });
-
-// const sundayScheduleTest = schedule.scheduleJob('31-35 1 * * 0', () => {
-//   sundaySend();
-//   console.log('ACTIVATED');
-// });
-
-// sundaySend();
 
 async function sundaySend() {
   try {
@@ -197,8 +188,8 @@ async function sundaySend() {
 }
 
 function runTests() {
-  if (deleteData) {
-    deleteAllUsers(); // FIXME: these are DANGEROUS once Sunday is up and running
+  if (config.deleteData) {
+    deleteAllUsers();
     deleteAllStories();
   }
   // Empty array to store tests starting with number
@@ -206,8 +197,8 @@ function runTests() {
   // Grab tests starting with number and store
   tests.forEach((test) => {
     if (!isNaN(test[0])) {
-      if (chooseTests) {
-        if (chooseTests.indexOf(test.substring(0, 2)) > -1) {
+      if (config.chooseTests) {
+        if (config.chooseTests.indexOf(test.substring(0, 2)) > -1) {
           testsStartingWithNumber.push(test);
         }
       } else {
