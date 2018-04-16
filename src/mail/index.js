@@ -39,8 +39,8 @@ const parseWithTalon = talon.signature.bruteforce.extractSignature;
 // Testing
 const tests = fs.readdirSync('./emails/tests/');
 const deleteData = true;
-// const chooseTests = ['01', '03', '15'];
-const chooseTests = false;
+const chooseTests = ['01', '03', '06'];
+// const chooseTests = false;
 const testDelay = 10000;
 runTests();
 
@@ -971,13 +971,13 @@ const listener = {
 
       // Save all emails to louis@sundaystori.es
       // They will have to have their 'to' address changed to work as tests
-      const to = mail.to[0].address;
-      if (to === 'louis@sundaystori.es') {
-        fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
-          if (err) console.log(err);
-          else console.log('>>>>>>>> Email saved >>>>>>>>');
-        });
-      }
+      // const to = mail.to[0].address;
+      // if (to === 'louis@sundaystori.es') {
+      //   fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
+      //     if (err) console.log(err);
+      //     else console.log('>>>>>>>> Email saved >>>>>>>>');
+      //   });
+      // }
     });
 
     mailListener.on('error', (err) => {

@@ -5,3 +5,5 @@
 .DS_Store
 /attachments
 /deprecated
+/src/awsconfig.json
+/src/config.json
