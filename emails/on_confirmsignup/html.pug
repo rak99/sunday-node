@@ -1,0 +1,21 @@
+include ../shared/other-top
+include ../shared/common
+div.d Hey #{firstName},
++br
+div.d Thanks for the info! You’re fully signed up to Sunday now.
++br
+div.d To write your first story, send an email to write@sundaystori.es (or just reply to this one).
++br
+div.d All the text in the email will be taken as your story (apart from your signature, which Sunday will ignore), as well as any picture you attach that’s at least 660 pixels wide.
++br
+div.d By the way, at some point you might want give the people you invited a little nudge to sign up fully, so that they won’t just be readers of your stories, but maybe write stories too.
++br
+div.d Here are the emails we added as your readers: #{addReaderEmailsHumanized}.
++br
+div.d Feel free to change these readers at any time by emailing in like this:
++br
+div.d #{cmd.addReader} example@addme.com
+div.d #{cmd.removeReader} anotherexample@removeme.com
++br
+div.d Yours,
+div.d Sunday

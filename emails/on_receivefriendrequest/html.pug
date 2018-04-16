@@ -1,7 +1,31 @@
-p Hey,
-p Just to let you know, #{firstName} #{lastName} (#{email}) would like to send you stories on Sunday.
-p If that's cool with you, don't do anything.
-p If you'd rather not receive their stories, just reply saying 'DELETE #{email}' and we'll take care of it.
-p If you want to start writing Sunday, reply with details. By the way, you will NOT send to XXXX by default unless you want to, in which case add in here.
-p Thanks,
-p Louis
+include ../shared/other-top
+include ../shared/common
+
+if referredUserFirstName
+  div.d Hey #{referredUserFirstName},
+else
+  div.d Hey,
++br
+div.d #{firstName} #{lastName} (#{email}) would like to send you stories on Sunday.
+div.d If that's OK, you don't need to do anything. They'll be added to your Sunday stories.
++br
+div.d If you'd rather not receive their stories, that's totally OK. Just reply and write '#{cmd.removeWriter} #{email}'. We'll explain to them that you prefer to keep Sunday just for a particular circle of family or close friends, no harm done.
++br
+if !referredUserFirstName
+  div.d If you'd like to write Sunday stories for #{firstName} and others, and not just read them, copy the below italics. Then reply to this email, paste in the italics and change them to your own details.
+  +br
+  div.d We'll get in touch with every email address that you give us, inviting your friends to read your Sunday stories, and to write stories themselves. We've put the email address for #{firstName} in there but you can take it out if you'd prefer.
+  +br
+  div.d.i First name: Barack
+  div.d.i Last name: Obama
+  +br
+  div.d.i Friends' emails
+  div.d.i #{email}
+  div.d.i michelle@obama.com
+  div.d.i malia@obama.com
+  div.d.i sasha@obama.com
+  +br
+  div.d.i (We recommend around 10 emails.)
+  +br
+div.d Yours,
+div.d Sunday

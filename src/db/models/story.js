@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import config from '../../config.json';
 
 const storySchema = Schema({
   text: String,
@@ -8,6 +9,12 @@ const storySchema = Schema({
   idOfCreator: String,
 });
 
-const Story = mongoose.model('Story', storySchema);
+let storyModelName = 'Story';
+
+if (config.dev) {
+  storyModelName = 'test-Story';
+}
+
+const Story = mongoose.model(storyModelName, storySchema);
 
 export default Story;

@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import config from '../../config.json';
 
 const userSchema = Schema({
   firstName: String,
@@ -8,10 +9,17 @@ const userSchema = Schema({
   referredBy: String,
   timeCreated: String,
   currentStoryId: String,
+  lastSentSunday: String,
 });
 
 userSchema.index({ name: 'text', writerIds: 'text' });
 
-const User = mongoose.model('User', userSchema);
+let userModelName = 'User';
+
+if (config.dev) {
+  userModelName = 'test-User';
+}
+
+const User = mongoose.model(userModelName, userSchema);
 
 export default User;

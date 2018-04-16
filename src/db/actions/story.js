@@ -1,17 +1,23 @@
 /* eslint-disable import/prefer-default-export */
 
-import moment from 'moment';
 import Story from '../models/story';
+import config from '../../config.json';
 
-export const createStory = (text, imageUrl) => {
-  const story = new Story({ text, imageUrl, timeCreated: moment().format() });
-  story.save((err) => {
-    if (err) console.log(err);
-  });
+export const deleteAllStories = () => {
+  if (config.dev) {
+    Story.remove({}, (err) => {
+      if (err) {
+        return console.log(err);
+      }
+      // removed!
+    });
+  } else {
+    console.log('Cannot delete all stories unless in dev mode');
+  }
 };
 
-export const deleteStoryData = () => {
-  Story.remove({}, (err) => {
+export const deleteStory = (id) => {
+  Story.remove({ _id: id }, (err) => {
     if (err) {
       return console.log(err);
     }
