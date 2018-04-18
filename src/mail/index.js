@@ -38,9 +38,13 @@ const parseWithTalon = talon.signature.bruteforce.extractSignature;
 const tests = fs.readdirSync('./emails/tests/');
 const testDelay = 10000;
 
-if (config.test) {
-  // runTests();
-  sundaySend();
+if (config.testmode) {
+  if (config.testinbound) {
+    runTests();
+  }
+  if (config.testoutbound && !config.testinbound) {
+    sundaySend();
+  }
 }
 
 const sundaySchedule = schedule.scheduleJob('0 12-15 * * 0', () => {
