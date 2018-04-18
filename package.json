@@ -31,7 +31,7 @@
     }
   },
   "repository": "danieljvdm/sunday-node",
-  "author": "Daniel van der Merwe <danieljmerwe@gmail.com>",
+  "author": "Louis Barclay <louis.barclay@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.116.0",
