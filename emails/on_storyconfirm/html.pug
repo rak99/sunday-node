@@ -4,18 +4,10 @@ include ../shared/story-content
 
 div.d Hey #{firstName},
 +br
-div.d Your story for this Sunday is below.
-+br
-div.d #{confirmMsg}
-+br
 if readersHumanized
-  div.d You might want to check that you're happy with who it's going to be sent to: #{readersHumanized}.
-  +br            
-  div.d (If only their email, and not their name, is showing, that means they haven't yet signed up to be a writer, so you won't receive their stories. Feel free to give them a nudge, if it won't be annoying.)
+  div.d Your story for this Sunday is below. It's going to be sent to your readers: #{readersHumanized}.
 else
-  div.d It looks like you currently have no readers of your Sunday stories.
-+br
-div.d You can easily add a new reader by replying with do 'ADDREADER newreader@theiremail.com' (which will send them an invite if they aren't yet on Sunday), or you can do 'REMOVEREADER newreader@theiremail.com'. And you can include these as much as you like.
+  div.d It looks like you currently have no readers of your Sunday stories. See below for how to add some.
 +br
 each val, index in stories
   +textArea(index + 1, val.name, val.day, val.text)
@@ -23,11 +15,29 @@ each val, index in stories
   if val.imageUrl
     +image(val.imageUrl)
     +br
-div.d If your story doesn't look right, here are a few things you can do:
+div.d.u Want to change your story? Or story text looking ugly?
 +br
-div.d - write '#{cmd.storyEnd}' to mark where your story ends, if your signature is accidentally getting included
-div.d - make sure you are sending an HTML email, not plain text
-div.d - reply saying what the problem is and write '#{cmd.sundayHelp}' in your reply, which means a real person will investigate for you
+div.d You can always change your story by simply sending a new email to write@sundaystori.es. To give the story the best chance of looking good, make sure you are sending an HTML email, not plain text. STILL not looking good after that? See 'Still something wrong...' below.
++br
+div.d.u Story going to the wrong people?
++br
+div.d Add a new reader by replying with do 'ADDREADER newreader@theiremail.com' (which will send them an invite if they aren't yet on Sunday), or 'REMOVEREADER newreader@theiremail.com' to remove. Write as many commands like these in one email as you like.
++br
+div.d.u Image missing, or want to change image?
++br
+div.d Make sure your image is wider than 660 pixels (if it's not, we won't have included it). To change the image, reply with your full story again, attaching a new image.
++br
+div.d.u Story includes unwanted text?
++br
+div.d Write '#{cmd.storyEnd}' to mark where your story ends, if your signature is accidentally getting included.
++br
+div.d.u Want to know which of your readers are signed up to send you stories?
++br
+div.d If you can see your friends' full names in the list above, they've signed up to send stories. If not, you might want to nudge them to sign up fully.
++br
+div.d.u Still something wrong?
++br
+div.d Reply saying what the problem is, with '#{cmd.sundayHelp}' in your reply &mdash; that means it'll be forwarded to a real person who will investigate.
 +br
 div.d Yours,
 div.d Sunday

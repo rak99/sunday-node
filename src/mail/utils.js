@@ -14,7 +14,10 @@ export const searchName = (emailText, nameVariants) => {
       text = text.substr(index);
       index = text.search(/\n/i);
       text = text.substr(0, index);
-      return text;
+      const capitalizeFirstLetter = (string) => {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      };
+      return capitalizeFirstLetter(text);
     }
   }
   return false;
@@ -49,7 +52,7 @@ export const searchAddAndRemove = (emailText) => {
   // Pull out emails according to the regex
   function findEmails(emailsArray, regexOption) {
     if (emailText.match(regexOption) !== null) {
-      emailText.match(regexOption).forEach(item => {
+      emailText.match(regexOption).forEach((item) => {
         emailsArray.push(item.match(matchEmail)[0]);
       });
     }
@@ -66,7 +69,7 @@ export const searchAddAndRemove = (emailText) => {
 
 searchAddAndRemove(testAddAndRemove);
 
-export const searchEmails = emailText => {
+export const searchEmails = (emailText) => {
   const emails = emailText.match(matchEmail);
   return emails;
 };
@@ -107,7 +110,7 @@ export const trimAndFindStoryEnd = (emailText) => {
 
 export const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
@@ -139,7 +142,7 @@ export const unwrapPlainText = (plainText) => {
     } else {
       // Define next item array split by space, to grab first word
       const nextItemArray = nextItem.split(' ');
-      // console.log(thisItem, nextItemArray[0], thisItem.length, nextItemArray[0].length);
+      // log.info(thisItem, nextItemArray[0], thisItem.length, nextItemArray[0].length);
       // See if line would have been long enough to force wrap
       if (thisItem.length + nextItemArray[0].length + 1 > cutOff) {
         newString += `${thisItem} `; // Put a space after string - not a real line break

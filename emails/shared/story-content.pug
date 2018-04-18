@@ -1,12 +1,7 @@
 //- Text area
 mixin textArea(index, name, day, text)
-  div.d
-    u
-      //- =index
-      //- | . 
-      =name
-      | , written on 
-      =day
+  div.d.u=name
+  div.d.i=day
   +br
   each val in text
     if (val === '')

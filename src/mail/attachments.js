@@ -1,3 +1,4 @@
+import log from '../log';
 import AWS from 'aws-sdk';
 
 /** Load Config File */
@@ -15,9 +16,9 @@ export async function uploadAttachment(buffer, key) {
       Body: buffer,
     };
     const upload = await s3.putObject(params).promise();
-    console.log(`^^^^^^^^ Upload ${key}, ETag: ${upload.ETag} ^^^^^^^^`);
+    log.info(`^^^^^^^^ Upload ${key}, ETag: ${upload.ETag} ^^^^^^^^`);
   } catch (e) {
-    console.log(e);
+    log.info(e);
   }
 }
 
@@ -34,8 +35,8 @@ export async function deleteFile(key) {
       },
     };
     const deleteObject = await s3.deleteObjects(params).promise();
-    console.log(`^^^^^^^^ Delete ${key} (${deleteObject.Deleted.length}) ^^^^^^^^`);
+    log.info(`^^^^^^^^ Delete ${key} (${deleteObject.Deleted.length}) ^^^^^^^^`);
   } catch (e) {
-    console.log(e);
+    log.info(e);
   }
 }

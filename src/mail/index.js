@@ -11,7 +11,7 @@ import parseReply from 'parse-reply';
 import sharp from 'sharp';
 import talon from 'talon';
 import schedule from 'node-schedule';
-import converter from 'number-to-words';
+import log from '../log';
 import config from '../config.json';
 import { deleteAllStories, deleteStory } from '../db/actions/story';
 import { deleteAllUsers } from '../db/actions/user';
@@ -39,17 +39,18 @@ const tests = fs.readdirSync('./emails/tests/');
 const testDelay = 10000;
 
 if (config.test) {
-  runTests();
+  // runTests();
+  sundaySend();
 }
 
 const sundaySchedule = schedule.scheduleJob('0 12-15 * * 0', () => {
-  console.log('Scheduled job started');
+  log.info('Scheduled job started');
   sundaySend();
 });
 
 async function sundaySend() {
   try {
-    console.log(`>>>>>>>> Start Sunday send at ${moment().format('h:mm:ss a, dddd MMMM Do YYYY')}`);
+    log.info(`>>>>>>>> Start Sunday send at ${moment().format('h:mm:ss a, dddd MMMM Do YYYY')}`);
     // Bring up all users, who have any writerIds
     const findAll = await User.find({});
     // Define allStories object which we will add to in order to cache and save resources
@@ -58,8 +59,15 @@ async function sundaySend() {
     await Promise.all(
       findAll.map(async (user) => {
         // See if lastSentSunday is today, i.e. has already sent
-        if (!_.isUndefined(user.lastSentSunday) && user.lastSentSunday === moment().startOf('day').hour(12).format()) {
-          console.log(`${user.email}: already sent Sunday this week`);
+        if (
+          !_.isUndefined(user.lastSentSunday) &&
+          user.lastSentSunday ===
+            moment()
+              .startOf('day')
+              .hour(12)
+              .format()
+        ) {
+          log.info(`${user.email}: already sent Sunday this week`);
         } else {
           const userStories = [];
           // If they have any writers
@@ -107,11 +115,15 @@ async function sundaySend() {
                           imageUrl: currentStory.imageUrl,
                         };
                       } else {
-                        console.log(`No story this week (current story is ${currentStory.weekCommencing}, and now is ${moment()
-                          .subtract(1, 'days')
-                          .startOf('week')
-                          .hour(12)
-                          .format()})`);
+                        log.info(
+                          `No story this week (current story is ${
+                            currentStory.weekCommencing
+                          }, and now is ${moment()
+                            .subtract(1, 'days')
+                            .startOf('week')
+                            .hour(12)
+                            .format()})`,
+                        );
                       }
                     }
                   }
@@ -127,10 +139,10 @@ async function sundaySend() {
             if (userStories.length > 0) {
               let firstName = false;
               if (_.isUndefined(user.firstName)) {
-                console.log(`\n>>>>>>>> Recipient is ${user.email} (${user._id})`);
+                log.info(`\n>>>>>>>> Recipient is ${user.email} (${user._id})`);
               } else {
                 firstName = user.firstName;
-                console.log(
+                log.info(
                   `\n>>>>>>>> Recipient is ${user.firstName} ${user.firstName} (${user.email}, ${
                     user._id
                   })`,
@@ -139,26 +151,20 @@ async function sundaySend() {
               const storyNames = [];
               userStories.forEach((story, i) => {
                 storyNames.push(story.firstName);
-                // console.log(`${i + 1}: ${story.name}'s story`);
-                // console.log(`Day: ${story.day}`);
-                // console.log(`Text: ${story.text[0].substring(0, 30)}`);
-                // console.log(`Image URL: ${story.imageUrl}`);
+                // log.info(`${i + 1}: ${story.name}'s story`);
+                // log.info(`Day: ${story.day}`);
+                // log.info(`Text: ${story.text[0].substring(0, 30)}`);
+                // log.info(`Image URL: ${story.imageUrl}`);
               });
               // Randomise order of storyNames
               shuffleArray(storyNames);
-              let sundayStoriesSubjectLine = `${moment().format('dddd Do MMMM')}: a story from ${
-                storyNames[0]
-              }`;
-              if (storyNames.length > 1 && storyNames.length < 4) {
-                sundayStoriesSubjectLine = `${moment().format(
-                  'dddd Do MMMM',
-                )}: stories from ${Humanize.oxford(storyNames)}`;
-              } else {
-                sundayStoriesSubjectLine = `${moment().format(
-                  'dddd Do MMMM',
-                )}: stories from ${Humanize.oxford(storyNames.slice(0, 3))} and ${converter.toWords(
-                  storyNames.length - 3,
-                )} more`;
+              let sundayStoriesSubjectLine = `A story from ${storyNames[0]} (${moment().format(
+                'dddd Do MMMM',
+              )})`;
+              if (storyNames.length > 1) {
+                sundayStoriesSubjectLine = `Stories from ${Humanize.oxford(
+                  storyNames,
+                )} (${moment().format('dddd Do MMMM')})`;
               }
               sendMail('on_sunday', user.email, {
                 stories: userStories,
@@ -168,10 +174,15 @@ async function sundaySend() {
               // Update user with lastSentSunday
               const updateLastSentSunday = await User.update(
                 { email: user.email },
-                { lastSentSunday: moment().startOf('day').hour(12).format() },
+                {
+                  lastSentSunday: moment()
+                    .startOf('day')
+                    .hour(12)
+                    .format(),
+                },
                 { multi: true },
               );
-              console.log(
+              log.info(
                 `${user.email}: successfully sent Sunday (${
                   updateLastSentSunday.nModified
                 } update)`,
@@ -181,9 +192,9 @@ async function sundaySend() {
         }
       }),
     );
-    console.log(`>>>>>>>> Finish Sunday send at ${moment().format('h:mm:ss a, dddd MMMM Do YYYY')}`);
+    log.info(`>>>>>>>> Finish Sunday send at ${moment().format('h:mm:ss a, dddd MMMM Do YYYY')}`);
   } catch (e) {
-    console.log(e);
+    log.info(e);
   }
 }
 
@@ -211,7 +222,7 @@ function runTests() {
   // Function to deploy a test
   function deployTest(testFileName) {
     const testObject = JSON.parse(fs.readFileSync(`./emails/tests/${testFileName}`, 'utf8'));
-    console.log(`******** Running test '${testFileName}' ********`);
+    log.info(`******** Running test '${testFileName}' ********`);
     processMail(testObject);
   }
   // Timeout
@@ -256,10 +267,10 @@ async function processMail(mail) {
     const email = mail.from[0].address;
     // Emails to ignore
     if (email.includes('postmarkapp.com')) {
-      console.log(`${email}: emailed - ignored`);
+      log.info(`${email}: emailed - ignored`);
       return;
     }
-    console.log(`${email}: emailed`);
+    log.info(`${email}: emailed`);
 
     // Look up user record from email
     const findUser = await User.findOne(
@@ -268,7 +279,7 @@ async function processMail(mail) {
     );
     if (!findUser) {
       // If user doesn't exist
-      console.log(`${email}: user not found - creating`);
+      log.info(`${email}: user not found - creating`);
 
       // Create user
       const newUser = new User({
@@ -277,7 +288,7 @@ async function processMail(mail) {
         referredBy: 'direct',
       });
       const createNewUser = await newUser.save();
-      console.log(`${createNewUser.email}: saved as new user`);
+      log.info(`${createNewUser.email}: saved as new user`);
 
       // Send on_signup email asking them for further details
       sendMail('on_signup', email, {}, mail.messageId, mail.subject);
@@ -292,7 +303,7 @@ async function processMail(mail) {
       const text = parseWithTalon(reply).text; // Should use talon instead
 
       // Print the email text
-      // console.log(`Email from ${email}: \n${text.substring(0, 100)}`);
+      // log.info(`Email from ${email}: \n${text.substring(0, 100)}`);
 
       // Define first and last names false initially
       let firstName = false;
@@ -300,9 +311,9 @@ async function processMail(mail) {
 
       // Find out if first name exists
       if (_.isUndefined(findUser.firstName)) {
-        console.log(`${email}: is not fully registered (did not find first name)`);
+        log.info(`${email}: is not fully registered (did not find first name)`);
       } else {
-        console.log(`${email}: is fully registered (found first name)`);
+        log.info(`${email}: is fully registered (found first name)`);
         firstName = findUser.firstName;
         lastName = findUser.lastName;
       }
@@ -325,7 +336,7 @@ async function processMail(mail) {
 
         // Search for a writer remove request before asking for more info
         if (text.includes(cmd.removeWriter)) {
-          console.log(`${email}: found removeWriter command`);
+          log.info(`${email}: found removeWriter command`);
           const changes = searchAddAndRemove(text);
           // If no other changes, process now, else process later all in one batch
           // Only do operation if there are emails to remove
@@ -349,14 +360,14 @@ async function processMail(mail) {
                 mail.messageId,
                 mail.subject,
               );
-              console.log(`${email}: removeWriter - done for ${removeWritersHumanized}`);
+              log.info(`${email}: removeWriter - done for ${removeWritersHumanized}`);
             } else {
               // Should be optimised - duplicate with below
-              console.log(`${email}: removeWriter but no valid emails!`);
+              log.info(`${email}: removeWriter but no valid emails!`);
               sendMail('on_removewriterfail', email, {}, mail.messageId, mail.subject);
             }
           } else {
-            console.log(`${email}: removeWriter but no emails!`);
+            log.info(`${email}: removeWriter but no emails!`);
             sendMail('on_removewriterfail', email, {}, mail.messageId, mail.subject);
           }
           return;
@@ -366,7 +377,7 @@ async function processMail(mail) {
         if (text.includes(cmd.rejectInvite)) {
           // Assuming there is a referral email (always should be, send 'on_rejectinvite')
           if (findUser.referredBy !== 'direct') {
-            console.log(
+            log.info(
               `${email}: rejecting invite and deleting account (referred by ${
                 findUser.referredBy
               })`,
@@ -375,7 +386,7 @@ async function processMail(mail) {
           }
           User.remove({ email }, (err) => {
             if (err) {
-              return console.log(err);
+              return log.info(err);
             }
           });
           sendMail('on_deleteaccount', email, {}, mail.messageId, mail.subject);
@@ -400,7 +411,7 @@ async function processMail(mail) {
             { firstName, lastName },
             { multi: true },
           );
-          console.log(
+          log.info(
             `${email}: name is ${firstName} ${lastName}, update account (${
               updateNames.nModified
             } update)`,
@@ -452,14 +463,14 @@ async function processMail(mail) {
           text.includes(cmd.addReader) ||
           text.includes(cmd.removeWriter)
         ) {
-          console.log(`${email}: found remove reader, add reader, or remove writer`);
+          log.info(`${email}: found remove reader, add reader, or remove writer`);
           const changes = searchAddAndRemove(text);
           // Remove duplicates (user is trying to add and remove same email)
           const addAndRemove = (array1, array2) => array2.some(item => array1.indexOf(item) >= 0);
           const duplicates = addAndRemove(changes.addReaderEmails, changes.removeReaderEmails);
           if (duplicates) {
             duplicates.forEach((item) => {
-              console.log(`${email}: found duplicate in add and remove - ${item}`);
+              log.info(`${email}: found duplicate in add and remove - ${item}`);
               const removeDuplicates = (array) => {
                 const index = array.indexOf(item);
                 if (index > -1) {
@@ -485,7 +496,7 @@ async function processMail(mail) {
           await Promise.all(
             changes.removeReaderEmails.map(async (removeReaderEmail) => {
               if (removeReaderEmail === email) {
-                console.log(`${email}: removeReader - skip own email`);
+                log.info(`${email}: removeReader - skip own email`);
               } else {
                 const findRemoveReader = await User.findOne(
                   { email: removeReaderEmail },
@@ -503,16 +514,14 @@ async function processMail(mail) {
                       removeReadersSuccess.push(`${firstName} ${lastName} (${removeReaderEmail})`);
                     }
                   } else {
-                    console.log(`${email}: removeReader - reader never had user in writerIds`);
+                    log.info(`${email}: removeReader - reader never had user in writerIds`);
                   }
                   const updateWriterIds = await User.update(
                     { email: removeReaderEmail },
                     { writerIds },
                     { multi: true },
                   );
-                  console.log(
-                    `${email}: removeReader - done (${updateWriterIds.nModified} update)`,
-                  );
+                  log.info(`${email}: removeReader - done (${updateWriterIds.nModified} update)`);
                   // Send email saying 'X has added you. If not cool, let us know'
                   sendMail('on_removedasreader', removeReaderEmail, {
                     firstName,
@@ -595,7 +604,7 @@ async function processMail(mail) {
             { currentStoryId: '' },
             { multi: false },
           );
-          console.log(`${email} currentStoryId remove (${updateCurrentStoryId.nModified} update)`);
+          log.info(`${email} currentStoryId remove (${updateCurrentStoryId.nModified} update)`);
           // Send confirmation of cancellation
           sendMail('on_cancelstory', email, {}, mail.messageId, mail.subject);
           return;
@@ -626,7 +635,7 @@ async function processMail(mail) {
           storyText = trimAndFindStoryEnd(storyText);
         }
 
-        // console.log(`Story text: ${storyText.substring(0, 100)}`);
+        // log.info(`Story text: ${storyText.substring(0, 100)}`);
         let storyImgFileName = false;
         let confirmMsg = imgMsgs.noImg;
 
@@ -639,7 +648,7 @@ async function processMail(mail) {
               await uploadAttachment(outputBuffer, `${storyImgFileName}`);
               confirmMsg = imgMsgs.oneImg;
             } else {
-              console.log(`${email}: have image already so will not do anything else`);
+              log.info(`${email}: have image already so will not do anything else`);
             }
           }
           // Image upload function
@@ -655,13 +664,13 @@ async function processMail(mail) {
                 const dimensions = sizeOf(imgBuffer);
                 // Forget small images, and take first large image
                 if (dimensions.width < 660) {
-                  console.log(
+                  log.info(
                     `${email}: found small image ${fileName}, will skip (width: ${
                       dimensions.width
                     })`,
                   );
                 } else if (dimensions.width > 1320) {
-                  console.log(
+                  log.info(
                     `${email}: found large image ${fileName}, will resize (width: ${
                       dimensions.width
                     })`,
@@ -672,7 +681,7 @@ async function processMail(mail) {
                     .toBuffer();
                   await imgUpload(processedImage);
                 } else {
-                  console.log(
+                  log.info(
                     `${email}: found OK image ${fileName}, will use (width: ${dimensions.width})`,
                   );
                   const processedImage = await sharp(imgBuffer)
@@ -731,14 +740,14 @@ async function processMail(mail) {
             idOfCreator: idOfEmailer,
           });
           const createNewStory = await newStory.save();
-          console.log(`${email}: created new  story - ${createNewStory.text.substring(0, 50)}`);
+          log.info(`${email}: created new  story - ${createNewStory.text.substring(0, 50)}`);
           // Set new currentStoryId
           const updateCurrentStoryId = await User.update(
             { email },
             { currentStoryId: createNewStory.id.toString() },
             { multi: false },
           );
-          console.log(`${email}: currentStoryId update (${updateCurrentStoryId.nModified} update)`);
+          log.info(`${email}: currentStoryId update (${updateCurrentStoryId.nModified} update)`);
         } else {
           // Update existing story
           const updateStory = await Story.update(
@@ -750,7 +759,7 @@ async function processMail(mail) {
           const key = existingImgUrl.replace(config.s3, '');
           deleteFile(key);
           // Log update
-          console.log(`${email}: story update (${updateStory.nModified} update)`);
+          log.info(`${email}: story update (${updateStory.nModified} update)`);
         }
 
         // Reply with story confirmation
@@ -769,7 +778,7 @@ async function processMail(mail) {
           });
           readersHumanized = Humanize.oxford(readersArray);
         }
-        console.log(`${email}: confirm readers - ${readersHumanized}`);
+        log.info(`${email}: confirm readers - ${readersHumanized}`);
 
         // Turn story text into array for inserting into template
         const storyTextArray = storyText.split(/[\n\r]/);
@@ -798,7 +807,7 @@ async function processMail(mail) {
       }
     }
   } catch (e) {
-    console.log(e);
+    log.info(e);
   }
 }
 
@@ -817,7 +826,7 @@ async function removeWriters(
   await Promise.all(
     removeWriterEmails.map(async (removeWriterEmail) => {
       if (removeWriterEmail === email) {
-        console.log(`${email}: removeWriter - skip own email`);
+        log.info(`${email}: removeWriter - skip own email`);
       } else {
         const findRemoveWriter = await User.findOne(
           { email: removeWriterEmail },
@@ -838,15 +847,13 @@ async function removeWriters(
               lastName,
               email,
             });
-            console.log(
+            log.info(
               `${email}: removeWriter ${findRemoveWriter.firstName} ${
                 findRemoveWriter.lastName
               } and notify`,
             );
           } else {
-            console.log(
-              `${email}: removeWriter - ${removeWriterEmail} already not a writer for user`,
-            );
+            log.info(`${email}: removeWriter - ${removeWriterEmail} already not a writer for user`);
           }
         }
       }
@@ -856,20 +863,20 @@ async function removeWriters(
   // Now that you have the remove writer Ids, remove them
   removeWriterIds.forEach((removeWriterId) => {
     if (removeWriterId === idOfEmailer) {
-      console.log(`${email}: removeWriter - skip own id`);
+      log.info(`${email}: removeWriter - skip own id`);
     } else {
       const index = writerIds.indexOf(removeWriterId);
       if (index > -1) {
-        console.log(`${email}: removeWriter - ${removeWriterId} found`);
+        log.info(`${email}: removeWriter - ${removeWriterId} found`);
         writerIds.splice(index, 1);
       } else {
-        console.log(`${email}: removeWriter - id not found`);
+        log.info(`${email}: removeWriter - id not found`);
       }
     }
   });
   // Update user with removed writerIds
   const updateWriterIds = await User.update({ email }, { writerIds }, { multi: true });
-  console.log(`${email}: removeWriter - completed (${updateWriterIds.nModified} update)`);
+  log.info(`${email}: removeWriter - completed (${updateWriterIds.nModified} update)`);
 
   return successArray;
 }
@@ -879,14 +886,14 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
   await Promise.all(
     addReaderEmails.map(async (addReaderEmail) => {
       if (addReaderEmail === email) {
-        console.log(`${email}: addReader - skip own email`);
+        log.info(`${email}: addReader - skip own email`);
       } else {
         const findReferredUser = await User.findOne(
           { email: addReaderEmail },
           'email firstName lastName writerIds',
         );
         if (findReferredUser) {
-          console.log(
+          log.info(
             `${email}: addReader - ${addReaderEmail} already exists - will send on_receivefriendrequest`,
           );
           // Add to writerIds
@@ -894,7 +901,7 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
           // If this reader already has our user as a writer
           if (writerIds.indexOf(id.toString()) > -1) {
             // Do nothing
-            console.log(`${email}: addReader - ${addReaderEmail} already a reader`);
+            log.info(`${email}: addReader - ${addReaderEmail} already a reader`);
           } else {
             writerIds.push(id.toString());
             const updateWriterIds = await User.update(
@@ -902,7 +909,7 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
               { writerIds },
               { multi: true },
             );
-            console.log(
+            log.info(
               `${email}: addReader - ${addReaderEmail} (${updateWriterIds.nModified} update)`,
             );
             // Send email saying 'X has added you. If not cool, let us know'
@@ -933,10 +940,10 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
           }); // Change to moment.js
           const createNewUser = await newUser.save();
           sendMail('on_invite', addReaderEmail, { firstName, lastName, email });
-          console.log(
+          log.info(
             `${email}: addReader - ${addReaderEmail} does not exist - create and send on_invite`,
           );
-          console.log(`${email}: addReader - your friend ${createNewUser.email} saved as new user`);
+          log.info(`${email}: addReader - your friend ${createNewUser.email} saved as new user`);
           successArray.push(createNewUser.email);
         }
       }
@@ -950,11 +957,11 @@ const listener = {
     mailListener.start();
 
     mailListener.on('server:connected', () => {
-      console.log('imapConnected');
+      log.info('imapConnected');
     });
 
     mailListener.on('server:disconnected', () => {
-      console.log('imapDisconnected');
+      log.info('imapDisconnected');
     });
 
     mailListener.on('mail', (mail, seqno, attributes) => {
@@ -962,17 +969,17 @@ const listener = {
 
       // Save all emails to louis@sundaystori.es
       // They will have to have their 'to' address changed to work as tests
-      // const to = mail.to[0].address;
-      // if (to === 'louis@sundaystori.es') {
-      //   fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
-      //     if (err) console.log(err);
-      //     else console.log('>>>>>>>> Email saved >>>>>>>>');
-      //   });
-      // }
+      const to = mail.to[0].address;
+      if (to === 'louis@sundaystori.es') {
+        fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
+          if (err) log.info(err);
+          else log.info('>>>>>>>> Email saved >>>>>>>>');
+        });
+      }
     });
 
     mailListener.on('error', (err) => {
-      console.log(err);
+      log.info(err);
     });
   },
 };

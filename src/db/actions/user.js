@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 
+import log from '../../log';
 import User from '../models/user';
 import config from '../../config.json';
 
@@ -7,12 +8,12 @@ export const deleteAllUsers = () => {
   if (config.dev) {
     User.remove({}, (err) => {
       if (err) {
-        return console.log(err);
+        return log.info(err);
       }
       // removed!
     });
   } else {
-    console.log('Cannot delete all users unless in dev mode');
+    log.info('Cannot delete all users unless in dev mode');
   }
 };
 

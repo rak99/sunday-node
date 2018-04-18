@@ -1,3 +1,4 @@
+import log from '../log';
 import Email from 'email-templates';
 import { cmd } from '../mail/commands';
 import nodemailer from 'nodemailer';
@@ -40,6 +41,6 @@ export const sendMail = (template, to, locals, inReplyTo, subject) => {
       },
       locals,
     })
-    .then(console.log(`${to}: sent ${template}`))
+    .then(log.info(`${to}: sent ${template}`))
     .catch(console.error);
 };
