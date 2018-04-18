@@ -976,7 +976,7 @@ const listener = {
       // Save all emails to louis@sundaystori.es
       // They will have to have their 'to' address changed to work as tests
       const to = mail.to[0].address;
-      if (to === 'louis@sundaystori.es') {
+      if (to === 'louis@sundaystori.es' && config.saveEmails) {
         fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
           if (err) log.info(err);
           else log.info('>>>>>>>> Email saved >>>>>>>>');
