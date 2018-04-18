@@ -760,8 +760,10 @@ async function processMail(mail) {
             { multi: true },
           );
           // Delete existing photo
-          const key = existingImgUrl.replace(config.s3, '');
-          deleteFile(key);
+          if (existingImgUrl) {
+            const key = existingImgUrl.replace(config.s3, '');
+            deleteFile(key);
+          }
           // Log update
           log.info(`${email}: story update (${updateStory.nModified} update)`);
         }
