@@ -14,9 +14,7 @@ export const searchName = (emailText, nameVariants) => {
       text = text.substr(index);
       index = text.search(/\n/i);
       text = text.substr(0, index);
-      const capitalizeFirstLetter = (string) => {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-      };
+      const capitalizeFirstLetter = string => string.charAt(0).toUpperCase() + string.slice(1);
       return capitalizeFirstLetter(text);
     }
   }
@@ -71,7 +69,8 @@ searchAddAndRemove(testAddAndRemove);
 
 export const searchEmails = (emailText) => {
   const emails = emailText.match(matchEmail);
-  return emails;
+  const uniq = [...new Set(emails)];
+  return uniq;
 };
 
 export const firstNameVariants = [
