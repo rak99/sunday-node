@@ -16,7 +16,7 @@ userSchema.index({ name: 'text', writerIds: 'text' });
 
 let userModelName = 'User';
 
-if (config.dev) {
+if (config.dev || config.testmode) {
   userModelName = 'test-User';
 }
 

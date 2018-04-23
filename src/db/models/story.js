@@ -11,7 +11,7 @@ const storySchema = Schema({
 
 let storyModelName = 'Story';
 
-if (config.dev) {
+if (config.dev || config.testmode) {
   storyModelName = 'test-Story';
 }
 

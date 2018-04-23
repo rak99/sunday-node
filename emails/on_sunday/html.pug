@@ -19,7 +19,7 @@ else
   else
     div.d Here are your Sunday stories.
   +br
-  div.d You can write a story for next Sunday by following the instructions at the bottom of this email.
+  div.d You can write a story for next Sunday by following the instructions at the bottom of this email. Or, if you'd prefer not to receive these Sunday stories, reply with '#{cmd.sundayHelp} unsubscribe' in your email.
 +br
 each val, index in stories
   +textArea(index + 1, val.name, val.day, val.text)

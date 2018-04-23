@@ -47,10 +47,15 @@ if (config.testmode) {
   }
 }
 
-const sundaySchedule = schedule.scheduleJob('0 12-15 * * 0', () => {
-  log.info('Scheduled job started');
-  sundaySend();
-});
+const sundayHourOfDay = 12;
+
+const sundaySchedule = schedule.scheduleJob(
+  `0 ${sundayHourOfDay}-${sundayHourOfDay + 2} * * 0`,
+  () => {
+    log.info('Scheduled job started');
+    sundaySend();
+  },
+);
 
 async function sundaySend() {
   try {
@@ -265,16 +270,22 @@ const mailListener = new MailListener({
 async function processMail(mail) {
   try {
     const to = mail.to[0].address;
-    if (to !== 'write@sundaystori.es') {
+    const email = mail.from[0].address;
+
+    log.info(`${email}: emailed`);
+
+    if (config.testmode) {
+      if (to !== 'louis@sundaystori.es') {
+        return;
+      }
+    } else if (to !== 'write@sundaystori.es') {
       return;
     }
-    const email = mail.from[0].address;
     // Emails to ignore
     if (email.includes('postmarkapp.com')) {
       log.info(`${email}: emailed - ignored`);
       return;
     }
-    log.info(`${email}: emailed`);
 
     // Look up user record from email
     const findUser = await User.findOne(
@@ -401,6 +412,10 @@ async function processMail(mail) {
         firstName = searchName(text, firstNameVariants);
         lastName = searchName(text, lastNameVariants);
         const addReaderEmailsFromSignUp = searchEmails(text);
+
+        // To help debug error of double-adding names
+        log.info(text);
+        log.info(addReaderEmailsFromSignUp);
 
         // Ask for more info
         if (!firstName || !lastName || !addReaderEmailsFromSignUp) {
@@ -593,7 +608,7 @@ async function processMail(mail) {
               if (
                 currentStory.weekCommencing ===
                 moment()
-                  .subtract(12, 'hours')
+                  .subtract(sundayHourOfDay, 'hours')
                   .startOf('week')
                   .hour(12)
                   .format()
@@ -717,7 +732,7 @@ async function processMail(mail) {
             if (
               currentStory.weekCommencing ===
               moment()
-                .subtract(12, 'hours')
+                .subtract(sundayHourOfDay, 'hours')
                 .startOf('week')
                 .hour(12)
                 .format()
@@ -736,8 +751,8 @@ async function processMail(mail) {
             imageUrl: storyImgFileName,
             timeCreated: moment().format(),
             weekCommencing: moment()
-              // The deadline is 12 on Sunday TODO: should probably sync to the Sunday send schedule
-              .subtract(12, 'hours')
+              // The deadline is sundayHourOfDay on Sunday
+              .subtract(sundayHourOfDay, 'hours')
               .startOf('week')
               .hour(12)
               .format(),
@@ -958,16 +973,40 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
   return successArray;
 }
 
+let countReconnects = 0;
+let connected = false;
+
+function restart() {
+  if (!connected) {
+    countReconnects += 1;
+    log.info(`Attempt to reconnect ${countReconnects}`);
+    mailListener.start();
+  } else {
+    clearInterval(this);
+  }
+}
+
 const listener = {
   start: () => {
     mailListener.start();
 
     mailListener.on('server:connected', () => {
       log.info('imapConnected');
+      countReconnects = 0;
+      connected = true;
     });
 
     mailListener.on('server:disconnected', () => {
       log.info('imapDisconnected');
+      setTimeout(() => {
+        console.log('Trying to establish imap connection again');
+        mailListener.restart();
+      }, 5 * 1000);
+      // setTimeout(() => {
+      //   mailListener.start();
+      // }, 5000);
+      // connected = false;
+      // setInterval(restart, 5000);
     });
 
     mailListener.on('mail', (mail, seqno, attributes) => {
