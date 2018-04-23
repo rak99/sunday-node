@@ -270,7 +270,8 @@ const mailListener = new MailListener({
 async function processMail(mail) {
   try {
     const to = mail.to[0].address;
-    const email = mail.from[0].address;
+    let email = mail.from[0].address;
+    email = email.toLowerCase();
 
     log.info(`${email}: emailed`);
 
@@ -470,7 +471,7 @@ async function processMail(mail) {
         // If help is needed
         if (text.includes(cmd.sundayHelp)) {
           // Forward it to my personal inbox
-          sendMail('on_help', 'louis.barclay@gmail.com', { firstName, lastName, text });
+          sendMail('on_help', 'louis.barclay@gmail.com', { firstName, lastName, text, email });
           // Reply saying help is on the way
           sendMail('on_helpconfirm', email, {}, mail.messageId, mail.subject);
           return;
@@ -642,6 +643,12 @@ async function processMail(mail) {
           // Unwrap
           storyText = unwrapPlainText(storyText);
         } else {
+          // Convert from HTML
+          // Search for STORYEND
+          // Search for person's email or write@sundaystori.es
+          // If not found, apply trim
+          // If found, delete everything before that
+          // Apply trim
           // Take only the reply from the email chain
           storyText = replyParser(mail.html, true);
           // Convert HTML into text

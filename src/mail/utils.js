@@ -69,7 +69,8 @@ searchAddAndRemove(testAddAndRemove);
 
 export const searchEmails = (emailText) => {
   const emails = emailText.match(matchEmail);
-  const uniq = [...new Set(emails)];
+  let uniq = [...new Set(emails)];
+  uniq = uniq.map(v => v.toLowerCase());
   return uniq;
 };
 
