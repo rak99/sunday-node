@@ -580,7 +580,7 @@ async function processMail(mail) {
           }
 
           // Send confirmation of changes, if there have been any changes
-          if (removeWritersHumanized || removeReadersHumanized || removeWritersHumanized) {
+          if (addReadersHumanized || removeReadersHumanized || removeWritersHumanized) {
             sendMail(
               'on_confirmaccountchanges',
               email,
@@ -643,22 +643,53 @@ async function processMail(mail) {
           // Unwrap
           storyText = unwrapPlainText(storyText);
         } else {
-          // Convert from HTML
-          // Search for STORYEND
-          // Search for person's email or write@sundaystori.es
-          // If not found, apply trim
-          // If found, delete everything before that
-          // Apply trim
-          // Take only the reply from the email chain
-          storyText = replyParser(mail.html, true);
-          // Convert HTML into text
-          storyText = htmlToText.fromString(storyText, {
-            wordwrap: false,
-            preserveNewlines: true,
-            ignoreImage: true,
-          });
-          // Trim and find story end
-          storyText = trimAndFindStoryEnd(storyText);
+          // First search for STORYEND
+          if (mail.text.indexOf(cmd.storyEnd) > -1) {
+            // Grab story text up until STORYEND
+            storyText = mail.text.substr(0, mail.text.indexOf(cmd.storyEnd));
+            // Trim
+            storyText = storyText.trim();
+          } else {
+            // If STORYEND not found
+            // Take reply only
+            let matchString = replyParser(mail.text, true);
+            // Strip out signature
+            matchString = parseWithTalon(matchString).text;
+            // console.log(`Match string:\n${matchString}`);
+            // Take last 100 characters of reply
+            matchString = matchString.substr(matchString.length - 100);
+            // Take out all whitespaces and split into array, one item per character
+            const matchArray = matchString.replace(/\s/g, '').split('');
+            // For every item in array, escape the character
+            const escMatchArray = matchArray.map(x => x.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'));
+            // Join the array, put whitespace before, join with whitespace
+            matchString = `\\s*${escMatchArray.join('\\s*')}`;
+            // Make into regex
+            const matchRegex = new RegExp(matchString, 'g');
+            // Convert the HTML email to text, to get it ready to match regex
+            // (Or if no match, that's what we'll take!)
+            storyText = htmlToText.fromString(mail.html, {
+              wordwrap: false,
+              preserveNewlines: true,
+              ignoreImage: true,
+            });
+            // Find the regex in text
+            const matches = storyText.match(matchRegex);
+            if (matches) {
+              // Take the last match and find its lastIndexOf in the text, plus its length
+              const endPoint =
+                storyText.lastIndexOf(matches.slice(-1)[0]) + matches.slice(-1)[0].length;
+              storyText = storyText.substr(0, endPoint);
+              // log.info(`Story: ${storyText}`);
+              log.info('Matched up so successfully extracted text from reply');
+            } else {
+              // FIXME: get a warning ready - couldn't strip reply, sorry
+              log.info(`Couldn't match up so putting in full email - could send warning in future`);
+              log.info(storyText);
+              log.info(matchString);
+            }
+            storyText = storyText.trim();
+          }
         }
 
         // log.info(`Story text: ${storyText.substring(0, 100)}`);
