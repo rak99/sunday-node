@@ -3982,10 +3982,6 @@ parse-json@^2.2.0:
   dependencies:
     error-ex "^1.2.0"
 
-parse-reply@^0.0.4:
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/parse-reply/-/parse-reply-0.0.4.tgz#f5e90c9da3c4a0ff16236f109a6de1448c06c0f1"
-
 parseurl@~1.3.2:
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/parseurl/-/parseurl-1.3.2.tgz#fc289d4ed8993119460c156253262cdc8de65bf3"

@@ -1,13 +1,13 @@
 import http from 'http';
 import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import bodyParser from 'body-parser';
-import log from './log';
 import initializeDb from './db';
-import middleware from './middleware';
-import api from './api';
-import config from './config.json';
+// import cors from 'cors';
+// import morgan from 'morgan';
+// import bodyParser from 'body-parser';
+// import log from './log';
+// import middleware from './middleware';
+// import api from './api';
+// import config from './config.json';
 import mail from './mail';
 
 

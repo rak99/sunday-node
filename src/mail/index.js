@@ -7,7 +7,6 @@ import _ from 'lodash';
 import MailListener from 'mail-listener4';
 import moment from 'moment';
 import replyParser from 'node-email-reply-parser';
-import parseReply from 'parse-reply';
 import sharp from 'sharp';
 import talon from 'talon';
 import schedule from 'node-schedule';
@@ -19,6 +18,8 @@ import Story from '../db/models/story';
 import User from '../db/models/user';
 import { deleteFile, uploadAttachment } from '../mail/attachments';
 import { cmd } from '../mail/commands';
+import { boundaries } from '../mail/boundaries';
+import { dummyname } from '../mail/dummies';
 import { sendMail } from '../mail/send';
 import {
   firstNameVariants,
@@ -260,7 +261,7 @@ const mailListener = new MailListener({
   tlsOptions: { rejectUnauthorized: false },
   mailbox: 'INBOX', // mailbox to monitor
   searchFilter: ['UNSEEN'], // the search filter being used after an IDLE notification has been retrieved
-  markSeen: true, // all fetched email willbe marked as seen and not fetched next time
+  markSeen: true, // all fetched email will be marked as seen and not fetched next time
   fetchUnreadOnStart: true, // use it only if you want to get all unread email on lib start
   mailParserOptions: { streamAttachments: false }, // options to be passed to mailParser lib.
   attachments: true, // download attachments as they are encountered to the project directory
@@ -314,12 +315,7 @@ async function processMail(mail) {
       // Define the user ID
       const idOfEmailer = findUser._id;
 
-      // Parse the reply
-      const reply = parseReply(mail.text);
-      const text = parseWithTalon(reply).text; // Should use talon instead
-
-      // Print the email text
-      // log.info(`Email from ${email}: \n${text.substring(0, 100)}`);
+      const text = advancedReplyParser(mail.text);
 
       // Define first and last names false initially
       let firstName = false;
@@ -415,11 +411,18 @@ async function processMail(mail) {
         const addReaderEmailsFromSignUp = searchEmails(text);
 
         // To help debug error of double-adding names
-        log.info(text);
-        log.info(addReaderEmailsFromSignUp);
+        // log.info(firstName);
+        // log.info(lastName);
+        // log.info(addReaderEmailsFromSignUp);
 
         // Ask for more info
-        if (!firstName || !lastName || !addReaderEmailsFromSignUp) {
+        if (
+          !firstName ||
+          !lastName ||
+          !addReaderEmailsFromSignUp ||
+          firstName === dummyname.firstName ||
+          lastName === dummyname.lastName
+        ) {
           // Sorry, we need info to proceed
           sendMail('on_noinfo', email, {}, mail.messageId, mail.subject);
 
@@ -637,14 +640,14 @@ async function processMail(mail) {
         // Original method
         if (_.isUndefined(mail.html)) {
           // Take only the reply from the email chain
-          storyText = replyParser(mail.text, true);
+          storyText = advancedReplyParser(mail.text);
           // Trim and find story end
           storyText = trimAndFindStoryEnd(storyText);
           // Unwrap
           storyText = unwrapPlainText(storyText);
         } else {
           // First search for STORYEND
-          if (mail.text.indexOf(cmd.storyEnd) > -1) {
+          if (advancedReplyParser(mail.text).indexOf(cmd.storyEnd) > -1) {
             // Grab story text up until STORYEND
             storyText = mail.text.substr(0, mail.text.indexOf(cmd.storyEnd));
             // Trim
@@ -652,7 +655,7 @@ async function processMail(mail) {
           } else {
             // If STORYEND not found
             // Take reply only
-            let matchString = replyParser(mail.text, true);
+            let matchString = advancedReplyParser(mail.text);
             // Strip out signature
             matchString = parseWithTalon(matchString).text;
             // console.log(`Match string:\n${matchString}`);
@@ -661,7 +664,9 @@ async function processMail(mail) {
             // Take out all whitespaces and split into array, one item per character
             const matchArray = matchString.replace(/\s/g, '').split('');
             // For every item in array, escape the character
-            const escMatchArray = matchArray.map(x => x.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'));
+            const escMatchArray = matchArray.map(x =>
+              x.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'),
+            );
             // Join the array, put whitespace before, join with whitespace
             matchString = `\\s*${escMatchArray.join('\\s*')}`;
             // Make into regex
@@ -681,10 +686,9 @@ async function processMail(mail) {
                 storyText.lastIndexOf(matches.slice(-1)[0]) + matches.slice(-1)[0].length;
               storyText = storyText.substr(0, endPoint);
               // log.info(`Story: ${storyText}`);
-              log.info('Matched up so successfully extracted text from reply');
+              // log.info('Matched up so successfully extracted text from reply');
             } else {
-              // FIXME: get a warning ready - couldn't strip reply, sorry
-              log.info(`Couldn't match up so putting in full email - could send warning in future`);
+              log.info("Couldn't match up so putting in full email - could send warning in future");
               log.info(storyText);
               log.info(matchString);
             }
@@ -868,6 +872,46 @@ async function processMail(mail) {
   } catch (e) {
     log.info(e);
   }
+}
+
+function advancedReplyParser(inputText) {
+  // Parse the reply
+  log.info(`>>>>>>>> Before reply stripping: \n${inputText.length}`);
+  const reply = replyParser(inputText, true);
+  log.info(`>>>>>>>> After reply stripping: \n${reply.length}`);
+  let text = parseWithTalon(reply).text; // Should use talon instead
+  log.info(`>>>>>>>> Before boundary checking: \n${text.length}`);
+  // Search any of the boundaries phrases
+  let boundaryIndex = false;
+  // For each boundary
+  Object.values(boundaries).forEach((item) => {
+    // Find where the boundary appears in the text
+    const textTemp = text.replace(/\n/g, ' ');
+    const index = textTemp.indexOf(item);
+    // If it appears in the text
+    if (index > -1) {
+      // If a previous boundary already appeared
+      if (boundaryIndex) {
+        // If THIS index is lower than the previous one, i.e. sooner in the text
+        if (index < boundaryIndex) {
+          log.info(`Boundary stripping: ${item}`);
+          // Make the boundary index this NEW LOWER index
+          boundaryIndex = index;
+        }
+        // If no boundary index found yet, make boundary index this index
+      } else {
+        log.info(`Boundary stripping: ${item}`);
+        boundaryIndex = index;
+      }
+    }
+  });
+  // console.log(text);
+  // console.log(boundaryIndex);
+  if (boundaryIndex) {
+    text = text.substr(0, boundaryIndex);
+  }
+  log.info(`>>>>>>>> After boundary checking: \n${text.length}`);
+  return text;
 }
 
 async function removeWriters(

@@ -3,7 +3,7 @@ include ../shared/common
 
 div.d Hey #{firstName},
 +br
-div.d Thanks for emailing us to tweak your Sunday 
+div.d #{boundaries.on_confirmaccountchanges}
   if ((addReadersHumanized || removeReadersHumanized) && (removeWritersHumanized))
     | writers and readers
   else if removeWritersHumanized
@@ -21,7 +21,7 @@ if removeReadersHumanized
 if removeWritersHumanized
   div.d - removed #{removeWritersHumanized} from your writers
   +br
-div.d Hope that's all good &mdash; if you want help from a real person, reply to this email writing 'SUNDAYHELP'.
+div.d Hope that's all good &mdash; if you want help from a real person, reply to this email writing '#{cmd.sundayHelp}'.
 +br
 div.d Cheers,
 div.d Sunday

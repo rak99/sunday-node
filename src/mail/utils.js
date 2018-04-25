@@ -1,4 +1,5 @@
 import { cmd } from '../mail/commands';
+import { dummies } from '../mail/dummies';
 
 export const searchName = (emailText, nameVariants) => {
   for (let i = 0; i < nameVariants.length; i += 1) {
@@ -51,7 +52,15 @@ export const searchAddAndRemove = (emailText) => {
   function findEmails(emailsArray, regexOption) {
     if (emailText.match(regexOption) !== null) {
       emailText.match(regexOption).forEach((item) => {
-        emailsArray.push(item.match(matchEmail)[0]);
+        let notDummy = true;
+        dummies.forEach((dummy) => {
+          if (item.match(matchEmail)[0] === dummy) {
+            notDummy = false;
+          }
+        });
+        if (notDummy) {
+          emailsArray.push(item.match(matchEmail)[0]);
+        }
       });
     }
   }
@@ -71,6 +80,16 @@ export const searchEmails = (emailText) => {
   const emails = emailText.match(matchEmail);
   let uniq = [...new Set(emails)];
   uniq = uniq.map(v => v.toLowerCase());
+  // Remove any of the dummies emails
+  dummies.forEach((item) => {
+    const index = uniq.indexOf(item);
+    if (index > -1) {
+      uniq.splice(index, 1);
+    }
+  });
+  if (uniq.length === 0) {
+    return false;
+  }
   return uniq;
 };
 

@@ -3,25 +3,26 @@ include ../shared/common
 
 div.d Hey,
 +br
-div.d Sorry, we looked in your email but couldn't find your first name, last name, or emails you'd like to send Sunday stories to.
+div.d Sorry, we looked in your email but couldn't find either your first name, last name, or emails you'd like to send Sunday stories to.
 +br
-div.d If something's wrong and you want help, reply to this email and write '#{cmd.sundayHelp}' to talk to a real person.
+div.d If something's wrong #{boundaries.on_noinfo} #{cmd.sundayHelp} to talk to a real person.
 +br
-div.d If you'd still like to sign up to Sunday to write stories, copy the below italics. Then reply to this email, paste in Harry's info below, including his friends' emails, and change it to your own details.
+div.d If you'd still like to sign up to Sunday to write stories, copy the below italics. Then reply to this email, paste in #{dummyname.firstName}'s info below, including his friends' emails, and change it to your own details.
 +br
-div.d We'll get in touch with every email address that you give us, inviting your friends to read your Sunday stories, and to write stories themselves. We've put the email address for #{firstName} in there so they'll receive your stories in return but you can take it out if you'd prefer.
+div.d We'll get in touch with every email address that you give us, inviting your friends to read your Sunday stories, and to write stories themselves.
++br
+div.d If you only want to read people's stories (in other words, you don't have any friends' emails you want to send stories to) there's no need to sign up fully so you can ignore this email.
 +br
 div.d.i.u First name: 
-div.d.i Harry
+div.d.i #{dummyname.firstName}
 div.d.i.u Last name:
-div.d.i Potter
+div.d.i #{dummyname.lastName}
 +br
 div.d.i.u Friends' emails:
-div.d.i #{email}
-div.d.i ginny@potter.com
-div.d.i ron@dumbledoresarmy.co.uk
-div.d.i hermione@mofm.co.uk
-div.d.i neville.longbottom@leakycauldron.co
+div.d.i #{dummies[0]}
+div.d.i #{dummies[1]}
+div.d.i #{dummies[2]}
+div.d.i #{dummies[3]}
 +br
 div.d Five to ten emails is a good amount (you can always add more later).
 +br

@@ -5,9 +5,13 @@ include ../shared/story-content
 div.d Hey #{firstName},
 +br
 if readersHumanized
-  div.d Your story for this Sunday is below. It's going to be sent to your readers: #{readersHumanized}.
+  div.d #{boundaries.on_storyconfirm1}'s going to be sent to your readers: #{readersHumanized}.
 else
-  div.d It looks like you currently have no readers of your Sunday stories. See below for how to add some.
+  div.d #{boundaries.on_storyconfirm2} See below for how to add some.
++br
+div.d VERY IMPORTANT: please check that the story below ends where it's supposed to. We're still just getting started and we've had some bugs with finding the end of stories.
++br
+div.d If it's not ending in the right place, you can fix it by sending again and writing '#{cmd.storyEnd}' where the story should end.
 +br
 each val, index in stories
   +textArea(index + 1, val.name, val.day, val.text)
@@ -25,7 +29,7 @@ div.d Just reply and write '#{cmd.cancelStory}'.
 +br
 div.d.u Story going to the wrong people?
 +br
-div.d Add a new reader by replying with 'ADDREADER newreader@theiremail.com' (which will send them an invite if they aren't yet on Sunday), or 'REMOVEREADER newreader@theiremail.com' to remove. Write as many commands like these in one email as you like.
+div.d Add a new reader by replying with '#{cmd.addReader} #{dummies[4]}' (which will send them an invite if they aren't yet on Sunday), or '#{cmd.removeReader} #{dummies[5]}' to remove. Write as many commands like these in one email as you like.
 +br
 div.d.u Image missing, or want to change image?
 +br
