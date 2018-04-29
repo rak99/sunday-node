@@ -48,7 +48,7 @@ if (config.testmode) {
   }
 }
 
-const sundayHourOfDay = 12;
+const sundayHourOfDay = 13;
 
 const sundaySchedule = schedule.scheduleJob(
   `0 ${sundayHourOfDay}-${sundayHourOfDay + 2} * * 0`,

@@ -7,8 +7,7 @@ const transport = new timber.transports.HTTPS(
 timber.install(transport);
 
 const log = winston.createLogger({
-  transports: [
-  ],
+  transports: [],
 });
 
 log.add(
