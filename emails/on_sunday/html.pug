@@ -24,7 +24,7 @@ else
 each val, index in stories
   +textArea(index + 1, val.name, val.day, val.text)
   +br
-  if val.imageUrl
+  if val.imageUrl !== 'none'
     +image(val.imageUrl)
     +br
 if !firstName

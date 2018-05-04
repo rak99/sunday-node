@@ -16,7 +16,7 @@ div.d If it's not ending in the right place, you can fix it by sending again and
 each val, index in stories
   +textArea(index + 1, val.name, val.day, val.text)
   +br
-  if val.imageUrl
+  if val.imageUrl !== 'none'
     +image(val.imageUrl)
     +br
 div.d.u Want to change your story? Or story text looking ugly?

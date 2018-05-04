@@ -32,6 +32,7 @@ import {
   unwrapPlainText,
   shuffleArray,
 } from '../mail/utils';
+import { standardise } from '../mail/standardise';
 
 const parseWithTalon = talon.signature.bruteforce.extractSignature;
 
@@ -57,6 +58,21 @@ const sundaySchedule = schedule.scheduleJob(
     sundaySend();
   },
 );
+
+async function findEmail(email, params) {
+  const allUsers = await User.find({}, 'email _id');
+  let foundId = false;
+  allUsers.forEach((item) => {
+    if (!foundId && standardise(item.email) === standardise(email)) {
+      console.log('FOUND ' + item.email);
+      foundId = item._id;
+    }
+  });
+  if (foundId) {
+    return User.findById(foundId, params);
+  }
+  return foundId;
+}
 
 async function sundaySend() {
   try {
@@ -153,7 +169,7 @@ async function sundaySend() {
               } else {
                 firstName = user.firstName;
                 log.info(
-                  `\n>>>>>>>> Recipient is ${user.firstName} ${user.firstName} (${user.email}, ${
+                  `\n>>>>>>>> Recipient is ${user.firstName} ${user.lastName} (${user.email}, ${
                     user._id
                   })`,
                 );
@@ -290,8 +306,8 @@ async function processMail(mail) {
     }
 
     // Look up user record from email
-    const findUser = await User.findOne(
-      { email },
+    const findUser = await findEmail(
+      email,
       'email firstName lastName _id writerIds currentStoryId referredBy',
     );
     if (!findUser) {
@@ -311,6 +327,8 @@ async function processMail(mail) {
       sendMail('on_signup', email, {}, mail.messageId, mail.subject);
     } else {
       // If user does exist
+      // Overwrite email with what's already on record
+      email = findUser.email;
 
       // Define the user ID
       const idOfEmailer = findUser._id;
@@ -518,11 +536,11 @@ async function processMail(mail) {
           const removeReadersSuccess = [];
           await Promise.all(
             changes.removeReaderEmails.map(async (removeReaderEmail) => {
-              if (removeReaderEmail === email) {
+              if (standardise(removeReaderEmail) === standardise(email)) {
                 log.info(`${email}: removeReader - skip own email`);
               } else {
-                const findRemoveReader = await User.findOne(
-                  { email: removeReaderEmail },
+                const findRemoveReader = await findEmail(
+                  removeReaderEmail,
                   'email firstName lastName writerIds',
                 );
                 if (findRemoveReader) {
@@ -697,15 +715,22 @@ async function processMail(mail) {
         }
 
         // log.info(`Story text: ${storyText.substring(0, 100)}`);
-        let storyImgFileName = false;
+
+        let storyImgFileName = 'none';
         let confirmMsg = imgMsgs.noImg;
 
         // Check for attachments
         if (!_.isUndefined(mail.attachments)) {
+          // Create image upload function
           async function imgUpload(outputBuffer) {
-            if (!storyImgFileName) {
+            // Check if storyImgFileName is still 'none'
+            // If not, you already uploaded an image from that email, so skip
+            if (storyImgFileName === 'none') {
+              // Create a crypto ID
               const cryptoImgId = crypto.randomBytes(10).toString('hex');
+              // Set the storyImgFileName correctly
               storyImgFileName = `${cryptoImgId}${idOfEmailer.toString()}.png`;
+              // Upload the image
               await uploadAttachment(outputBuffer, `${storyImgFileName}`);
               confirmMsg = imgMsgs.oneImg;
             } else {
@@ -756,7 +781,7 @@ async function processMail(mail) {
         }
 
         // If image exists, append URL
-        if (storyImgFileName) {
+        if (storyImgFileName !== 'none') {
           storyImgFileName = `${config.s3}${storyImgFileName}`;
         }
 
@@ -801,7 +826,11 @@ async function processMail(mail) {
             idOfCreator: idOfEmailer,
           });
           const createNewStory = await newStory.save();
-          log.info(`${email}: created new  story - ${createNewStory.text.substring(0, 50)}`);
+          log.info(
+            `${email}: created new story - ${
+              createNewStory.imageUrl
+            } ${createNewStory.text.substring(0, 50)}`,
+          );
           // Set new currentStoryId
           const updateCurrentStoryId = await User.update(
             { email },
@@ -817,7 +846,7 @@ async function processMail(mail) {
             { multi: true },
           );
           // Delete existing photo
-          if (existingImgUrl && existingImgUrl !== 'false') {
+          if (existingImgUrl !== 'none') {
             const key = existingImgUrl.replace(config.s3, '');
             deleteFile(key);
           }
@@ -928,13 +957,10 @@ async function removeWriters(
   const successArray = [];
   await Promise.all(
     removeWriterEmails.map(async (removeWriterEmail) => {
-      if (removeWriterEmail === email) {
+      if (standardise(removeWriterEmail) === standardise(email)) {
         log.info(`${email}: removeWriter - skip own email`);
       } else {
-        const findRemoveWriter = await User.findOne(
-          { email: removeWriterEmail },
-          'email firstName lastName',
-        );
+        const findRemoveWriter = await findEmail(removeWriterEmail, 'email firstName lastName');
         // If writer to be removed exists
         if (findRemoveWriter) {
           // And if that writer is actually in our user's writers
@@ -988,11 +1014,11 @@ async function addReaders(addReaderEmails, email, firstName, lastName, id) {
   const successArray = [];
   await Promise.all(
     addReaderEmails.map(async (addReaderEmail) => {
-      if (addReaderEmail === email) {
+      if (standardise(addReaderEmail) === standardise(email)) {
         log.info(`${email}: addReader - skip own email`);
       } else {
-        const findReferredUser = await User.findOne(
-          { email: addReaderEmail },
+        const findReferredUser = await findEmail(
+          addReaderEmail,
           'email firstName lastName writerIds',
         );
         if (findReferredUser) {
