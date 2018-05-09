@@ -64,7 +64,7 @@ async function findEmail(email, params) {
   let foundId = false;
   allUsers.forEach((item) => {
     if (!foundId && standardise(item.email) === standardise(email)) {
-      console.log('FOUND ' + item.email);
+      console.log(`FOUND ${item.email}`);
       foundId = item._id;
     }
   });
@@ -424,9 +424,10 @@ async function processMail(mail) {
         }
 
         // Check email for firstName, lastName, and emails before asking for more info
-        firstName = searchName(text, firstNameVariants);
-        lastName = searchName(text, lastNameVariants);
-        const addReaderEmailsFromSignUp = searchEmails(text);
+        // Only search the boundary checked version!
+        firstName = searchName(advancedReplyParser(mail.text, true), firstNameVariants);
+        lastName = searchName(advancedReplyParser(mail.text, true), lastNameVariants);
+        const addReaderEmailsFromSignUp = searchEmails(advancedReplyParser(mail.text, true));
 
         // To help debug error of double-adding names
         // log.info(firstName);
@@ -442,7 +443,7 @@ async function processMail(mail) {
           lastName === dummyname.lastName
         ) {
           // Sorry, we need info to proceed
-          // sendMail('on_noinfo', email, {}, mail.messageId, mail.subject);
+          sendMail('on_noinfo', email, {}, mail.messageId, mail.subject);
 
           // We got the info, so update it and send confirmation
         } else {
@@ -903,13 +904,21 @@ async function processMail(mail) {
   }
 }
 
-function advancedReplyParser(inputText) {
-  // Parse the reply
-  log.info(`>>>>>>>> Before reply stripping: \n${inputText.length}`);
-  const reply = replyParser(inputText, true);
-  log.info(`>>>>>>>> After reply stripping: \n${reply.length}`);
-  let text = parseWithTalon(reply).text; // Should use talon instead
-  log.info(`>>>>>>>> Before boundary checking: \n${text.length}`);
+function advancedReplyParser(inputText, onlyBoundaryCheck) {
+  // Can have only boundary check option
+  let text = false;
+  if (onlyBoundaryCheck) {
+    text = inputText;
+    log.info(`>>>>>>>> Before boundary checking: \n${text.length}`);
+  } else {
+    // Parse the reply
+    log.info(`>>>>>>>> Before reply stripping: \n${inputText.length}`);
+    const reply = replyParser(inputText, true);
+    log.info(`>>>>>>>> After reply stripping: \n${reply.length}`);
+    text = parseWithTalon(reply).text; // Should use talon instead
+    log.info(`>>>>>>>> Before boundary checking: \n${text.length}`);
+  }
+
   // Search any of the boundaries phrases
   let boundaryIndex = false;
   // For each boundary
@@ -934,6 +943,7 @@ function advancedReplyParser(inputText) {
       }
     }
   });
+
   // console.log(text);
   // console.log(boundaryIndex);
   if (boundaryIndex) {

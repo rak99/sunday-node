@@ -192,3 +192,6 @@ export const imgMsgs = {
   oneImg:
     'We found an image with your story and have included it below. If this is the wrong image, reply to this email with your original story in the reply and the new image attached. If you decide you no longer want an image, simply reply to this email with your original story only, and no image.',
 };
+
+// searchName(testAddAndRemove, firstNameVariants);
+// searchName(testAddAndRemove, lastNameVariants);
