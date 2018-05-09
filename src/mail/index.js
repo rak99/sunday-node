@@ -442,7 +442,7 @@ async function processMail(mail) {
           lastName === dummyname.lastName
         ) {
           // Sorry, we need info to proceed
-          sendMail('on_noinfo', email, {}, mail.messageId, mail.subject);
+          // sendMail('on_noinfo', email, {}, mail.messageId, mail.subject);
 
           // We got the info, so update it and send confirmation
         } else {

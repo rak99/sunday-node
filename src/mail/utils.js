@@ -2,31 +2,44 @@ import { cmd } from '../mail/commands';
 import { dummies } from '../mail/dummies';
 
 export const searchName = (emailText, nameVariants) => {
+  console.log(emailText);
   for (let i = 0; i < nameVariants.length; i += 1) {
     let index = emailText.toLowerCase().indexOf(nameVariants[i].toLowerCase());
     let text = emailText;
     if (index < 0) {
+      console.log(0, text);
       // If not found, or currentVariant doesn't exist
       text = false;
     } else {
       // Found the variant so finding the string after it
       text = text.substr(index + nameVariants[i].length);
+      console.log(1, text);
       index = text.search(/[\u00C0-\u1FFF\u2C00-\uD7FF\w]/i);
       text = text.substr(index);
+      console.log(2, text);
       index = text.search(/\n/i);
       text = text.substr(0, index);
       const capitalizeFirstLetter = string => string.charAt(0).toUpperCase() + string.slice(1);
+      console.log('name:', text);
       return capitalizeFirstLetter(text);
     }
   }
   return false;
 };
 
-const testAddAndRemove = `
-  First name: Louistest
-Last name: Barclaytest
+const testAddAndRemove = `> First name:
+> Beatriz
+> Last name:
+> Barclay
+>=20
+> Friends' emails:
+> rupert.barclay@cairneagle.com
+lazlo.barclay@gmail.com
+louis.barclay@gmail.com
+lawrencebarclay@gmail.com
+charlotte.e.barclay@gmail.com
+gamarra_vargas@outlook.com
 
-- louis.barclay+janet@gmail.com
 `;
 
 const matchEmail = /([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
