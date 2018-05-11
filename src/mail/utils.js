@@ -44,15 +44,15 @@ gamarra_vargas@outlook.com
 
 const matchEmail = /([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
 const matchAddReader = new RegExp(
-  `(${cmd.addReader}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
+  `(${cmd.addReader}\\s*-*.*:*\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
   'gi',
 );
 const matchRemoveReader = new RegExp(
-  `(${cmd.removeReader}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
+  `(${cmd.removeReader}\\s*-*.*:*\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
   'gi',
 );
 const matchRemoveWriter = new RegExp(
-  `(${cmd.removeWriter}\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
+  `(${cmd.removeWriter}\\s*-*.*:*\\s+[a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)`,
   'gi',
 );
 
