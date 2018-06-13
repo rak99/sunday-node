@@ -7,4 +7,5 @@ export const cmd = {
   addReader: 'ADDREADER',
   removeWriter: 'REMOVEWRITER', // TODO: got to use it
   storyEnd: 'STORYEND',
+  stopReminders: 'STOPREMINDERS',
 };

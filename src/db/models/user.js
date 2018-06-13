@@ -10,6 +10,7 @@ const userSchema = Schema({
   timeCreated: String,
   currentStoryId: String,
   lastSentSunday: String,
+  sendReminder: Boolean,
 });
 
 userSchema.index({ name: 'text', writerIds: 'text' });

@@ -45,26 +45,95 @@ if (config.testmode) {
     runTests();
   }
   if (config.testoutbound && !config.testinbound) {
-    sundaySend();
+    // sundaySend();
+    reminderSend();
   }
 }
 
-const sundayHourOfDay = 12;
+const sundayHourOfDay = 19;
 
-const sundaySchedule = schedule.scheduleJob(
-  `0 ${sundayHourOfDay}-${sundayHourOfDay + 2} * * 0`,
-  () => {
-    log.info('Scheduled job started');
-    sundaySend();
-  },
-);
+const sundaySchedule = schedule.scheduleJob(`0 ${sundayHourOfDay} * * 0`, () => {
+  log.info('Sunday send started');
+  sundaySend();
+});
+
+const reminderSchedule = schedule.scheduleJob(`0 ${sundayHourOfDay} * * 6`, () => {
+  log.info('Reminder send started');
+  reminderSend();
+});
+
+async function reminderSend() {
+  console.log('Started reminderSend');
+  try {
+    const findAll = await User.find({});
+    await Promise.all(
+      findAll.map(async (user) => {
+        // See if user is properly signed up
+        if (!_.isUndefined(user.firstName)) {
+          // User is signed up
+          // If sendReminder is undefined or if it's true
+          if (_.isUndefined(user.sendReminder) || user.sendReminder) {
+            let canSendReminder = true;
+
+            // If sendReminder is not defined, update it
+            if (_.isUndefined(user.sendReminder)) {
+              const updateSendReminder = await User.update(
+                { email: user.email },
+                { sendReminder: true },
+                { multi: true },
+              );
+              log.info(
+                `${user.email}: updated sendReminder (${updateSendReminder.nModified} update)`,
+              );
+            }
+
+            // Check current story is not from this week
+            if (!_.isUndefined(user.currentStoryId) && user.currentStoryId !== '') {
+              // Check if there is a current story
+              const currentStory = await Story.findOne(
+                { _id: user.currentStoryId },
+                'text imageUrl weekCommencing timeCreated',
+              );
+              if (currentStory) {
+                // Check if it's from this week
+                if (
+                  currentStory.weekCommencing ===
+                  moment()
+                    .startOf('week')
+                    .hour(12) // FIXME: should this be consistent throughout?
+                    .format()
+                ) {
+                  canSendReminder = false;
+                }
+              }
+            }
+            // If passed the tests to send reminder, do it
+            if (canSendReminder) {
+              const readers = await getReaders(user.email, user.id);
+              sendMail('on_reminder', user.email, {
+                firstName: user.firstName,
+                readers,
+              });
+            } else {
+              log.info(`${user.email} already wrote story this week`);
+            }
+          } else {
+            log.info(`${user.email} doesn't want a reminder`);
+          }
+        }
+      }),
+    );
+  } catch (e) {
+    log.info(e);
+  }
+}
 
 async function findEmail(email, params) {
   const allUsers = await User.find({}, 'email _id');
   let foundId = false;
   allUsers.forEach((item) => {
     if (!foundId && standardise(item.email) === standardise(email)) {
-      console.log(`FOUND ${item.email}`);
+      // console.log(`FOUND ${item.email}`);
       foundId = item._id;
     }
   });
@@ -351,7 +420,7 @@ async function processMail(mail) {
       // If there is no firstName, ask for more info
       if (!firstName) {
         // If help is needed
-        if (text.includes(cmd.sundayHelp)) {
+        if (text.includes(cmd.sundayHelp) || mail.subject.includes(cmd.sundayHelp)) {
           // Forward it to my personal inbox
           sendMail('on_help', 'louis.barclay@gmail.com', {
             firstName: 'Unknown',
@@ -496,6 +565,19 @@ async function processMail(mail) {
           sendMail('on_help', 'louis.barclay@gmail.com', { firstName, lastName, text, email });
           // Reply saying help is on the way
           sendMail('on_helpconfirm', email, {}, mail.messageId, mail.subject);
+          return;
+        }
+
+        // Changing sendReminder
+        if (text.includes(cmd.stopReminders)) {
+          const updateSendReminder = await User.update(
+            { email },
+            { sendReminder: true },
+            { multi: true },
+          );
+          log.info(
+            `${email}: updated sendReminder (${updateSendReminder.nModified} update)`,
+          );
           return;
         }
 
@@ -692,11 +774,16 @@ async function processMail(mail) {
             const matchRegex = new RegExp(matchString, 'g');
             // Convert the HTML email to text, to get it ready to match regex
             // (Or if no match, that's what we'll take!)
+            // https://github.com/domchristie/turndown
+            // https://github.com/EDMdesigner/textversionjs
+            // https://github.com/showdownjs/showdown
             storyText = htmlToText.fromString(mail.html, {
               wordwrap: false,
               preserveNewlines: true,
               ignoreImage: true,
+              hideLinkHrefIfSameAsText: true,
             });
+            // console.log(storyText);
             // Find the regex in text
             const matches = storyText.match(matchRegex);
             if (matches) {
@@ -708,8 +795,8 @@ async function processMail(mail) {
               // log.info('Matched up so successfully extracted text from reply');
             } else {
               log.info("Couldn't match up so putting in full email - could send warning in future");
-              log.info(storyText);
-              log.info(matchString);
+              // log.info(storyText);
+              // log.info(matchString);
             }
             storyText = storyText.trim();
           }
@@ -858,32 +945,20 @@ async function processMail(mail) {
         // Reply with story confirmation
 
         // Find readers for confirmation
-        const findReaders = await User.find({ $text: { $search: idOfEmailer.toString() } });
-        const readersArray = [];
-        let readersHumanized = false;
-        if (findReaders.length > 0) {
-          findReaders.forEach((item) => {
-            if (_.isUndefined(item.firstName)) {
-              readersArray.push(item.email);
-            } else {
-              readersArray.push(`${item.firstName} ${item.lastName} (${item.email})`);
-            }
-          });
-          readersHumanized = Humanize.oxford(readersArray);
-        }
-        log.info(`${email}: confirm readers - ${readersHumanized}`);
+        const readers = await getReaders(email, idOfEmailer);
 
         // Turn story text into array for inserting into template
         const storyTextArray = storyText.split(/[\n\r]/);
+        // console.log(storyTextArray); // FIXME: this is the stuff to check
 
-        // Send confirmation TODO: use this for Sunday too
+        // Send confirmation
         sendMail(
           'on_storyconfirm',
           email,
           {
             firstName,
             lastName,
-            readersHumanized,
+            readers,
             confirmMsg,
             stories: [
               {
@@ -904,19 +979,37 @@ async function processMail(mail) {
   }
 }
 
+async function getReaders(email, id) {
+  const findReaders = await User.find({ $text: { $search: id.toString() } });
+  const readersArray = [];
+  let readersHumanized = false;
+  if (findReaders.length > 0) {
+    findReaders.forEach((item) => {
+      if (_.isUndefined(item.firstName)) {
+        readersArray.push(item.email);
+      } else {
+        readersArray.push(`${item.firstName} ${item.lastName} (${item.email})`);
+      }
+    });
+    readersHumanized = Humanize.oxford(readersArray);
+  }
+  log.info(`${email}: confirm readers - ${readersHumanized}`);
+  return readersHumanized;
+}
+
 function advancedReplyParser(inputText, onlyBoundaryCheck) {
   // Can have only boundary check option
   let text = false;
   if (onlyBoundaryCheck) {
     text = inputText;
-    log.info(`>>>>>>>> Before boundary checking: \n${text.length}`);
+    // log.info(`>>>>>>>> Before boundary checking: \n${text.length}`);
   } else {
     // Parse the reply
-    log.info(`>>>>>>>> Before reply stripping: \n${inputText.length}`);
+    // log.info(`>>>>>>>> Before reply stripping: \n${inputText.length}`);
     const reply = replyParser(inputText, true);
-    log.info(`>>>>>>>> After reply stripping: \n${reply.length}`);
+    // log.info(`>>>>>>>> After reply stripping: \n${reply.length}`);
     text = parseWithTalon(reply).text; // Should use talon instead
-    log.info(`>>>>>>>> Before boundary checking: \n${text.length}`);
+    // log.info(`>>>>>>>> Before boundary checking: \n${text.length}`);
   }
 
   // Search any of the boundaries phrases
@@ -949,7 +1042,7 @@ function advancedReplyParser(inputText, onlyBoundaryCheck) {
   if (boundaryIndex) {
     text = text.substr(0, boundaryIndex);
   }
-  log.info(`>>>>>>>> After boundary checking: \n${text.length}`);
+  // log.info(`>>>>>>>> After boundary checking: \n${text.length}`);
   return text;
 }
 
@@ -1134,7 +1227,7 @@ const listener = {
       // They will have to have their 'to' address changed to work as tests
       const to = mail.to[0].address;
       if (to === 'louis@sundaystori.es' && config.saveEmails) {
-        fs.writeFile(`./emails/tests/${mail.subject}.json`, JSON.stringify(mail), 'binary', (err) => {
+        fs.writeFile(`./emails/tests/${mail.subject.toString()}.json`, JSON.stringify(mail), 'binary', (err) => {
           if (err) log.info(err);
           else log.info('>>>>>>>> Email saved >>>>>>>>');
         });

@@ -4,8 +4,8 @@ include ../shared/story-content
 
 div.d Hey #{firstName},
 +br
-if readersHumanized
-  div.d #{boundaries.on_storyconfirm1}'s going to be sent to your readers: #{readersHumanized}.
+if readers
+  div.d #{boundaries.on_storyconfirm1}'s going to be sent to your readers: #{readers}.
 else
   div.d #{boundaries.on_storyconfirm2} See below for how to add some.
 +br
