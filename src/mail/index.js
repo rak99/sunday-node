@@ -946,7 +946,7 @@ async function processMail(mail) {
 
         // Find readers for confirmation
         const readers = await getReaders(email, idOfEmailer);
-        console.log('readers:', readers);
+        log.info('readers1:', readers);
 
         // Turn story text into array for inserting into template
         const storyTextArray = storyText.split(/[\n\r]/);
@@ -993,7 +993,7 @@ async function getReaders(email, id) {
       }
     });
     readersHumanized = await Humanize.oxford(readersArray);
-    log.info(`${email}: confirm readers - ${readersHumanized}`);
+    log.info(`${email}: confirm readers2 - ${readersHumanized}`);
     return readersHumanized;
   }
   return false;
