@@ -945,7 +945,7 @@ async function processMail(mail) {
         // Reply with story confirmation
 
         // Find readers for confirmation
-        const readers = await getReaders(email, idOfEmailer);
+        const readersHumanized = await getReaders(email, idOfEmailer);
 
         // Turn story text into array for inserting into template
         const storyTextArray = storyText.split(/[\n\r]/);
@@ -958,7 +958,7 @@ async function processMail(mail) {
           {
             firstName,
             lastName,
-            readers,
+            readers: readersHumanized,
             confirmMsg,
             stories: [
               {
