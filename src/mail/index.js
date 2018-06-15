@@ -945,7 +945,8 @@ async function processMail(mail) {
         // Reply with story confirmation
 
         // Find readers for confirmation
-        const readersHumanized = await getReaders(email, idOfEmailer);
+        const readers = await getReaders(email, idOfEmailer);
+        console.log('readers:', readers);
 
         // Turn story text into array for inserting into template
         const storyTextArray = storyText.split(/[\n\r]/);
@@ -958,7 +959,7 @@ async function processMail(mail) {
           {
             firstName,
             lastName,
-            readers: readersHumanized,
+            readers,
             confirmMsg,
             stories: [
               {
@@ -991,10 +992,11 @@ async function getReaders(email, id) {
         readersArray.push(`${item.firstName} ${item.lastName} (${item.email})`);
       }
     });
-    readersHumanized = Humanize.oxford(readersArray);
+    readersHumanized = await Humanize.oxford(readersArray);
+    log.info(`${email}: confirm readers - ${readersHumanized}`);
+    return readersHumanized;
   }
-  log.info(`${email}: confirm readers - ${readersHumanized}`);
-  return readersHumanized;
+  return false;
 }
 
 function advancedReplyParser(inputText, onlyBoundaryCheck) {
