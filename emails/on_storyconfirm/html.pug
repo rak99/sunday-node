@@ -11,7 +11,7 @@ else
 +br
 div.d VERY IMPORTANT: please check that the story below ends where it's supposed to. We're still just getting started and we've had some bugs with finding the end of stories.
 +br
-div.d If it's not ending in the right place, you can fix it by sending again and writing '#{cmd.storyEnd}' where the story should end.
+div.d If it's not ending in the right place, you can fix it by sending again and writing #{cmd.storyEnd} where the story should end.
 +br
 each val, index in stories
   +textArea(index + 1, val.name, val.day, val.text)
@@ -19,17 +19,19 @@ each val, index in stories
   if val.imageUrl !== 'none'
     +image(val.imageUrl)
     +br
+div.d ––––––––––––––––––––––––––––––––––––––––
++br
 div.d.u Want to change your story? Or story text looking ugly?
 +br
 div.d You can always change your story by simply sending a new email to write@sundaystori.es. To give the story the best chance of looking good, make sure you are sending an HTML email, not plain text. STILL not looking good after that? See 'Still something wrong...' below.
 +br
 div.d.u Want to cancel your story completely?
 +br
-div.d Just reply and write '#{cmd.cancelStory}'.
+div.d Just reply and write #{cmd.cancelStory}.
 +br
 div.d.u Story going to the wrong people?
 +br
-div.d Add a new reader by replying with '#{cmd.addReader} #{dummies[4]}' (which will send them an invite if they aren't yet on Sunday), or '#{cmd.removeReader} #{dummies[5]}' to remove. Write as many commands like these in one email as you like.
+div.d Add a new reader by replying with #{cmd.addReader} #{dummies[4]} (which will send them an invite if they aren't yet on Sunday), or '#{cmd.removeReader} #{dummies[5]}' to remove. Write as many commands like these in one email as you like.
 +br
 div.d.u Image missing, or want to change image?
 +br
@@ -37,7 +39,7 @@ div.d Make sure your image is wider than 660 pixels (if it's not, we won't have 
 +br
 div.d.u Story includes unwanted text?
 +br
-div.d Write '#{cmd.storyEnd}' to mark where your story ends, if your signature is accidentally getting included.
+div.d Write #{cmd.storyEnd} to mark where your story ends, if your signature is accidentally getting included.
 +br
 div.d.u Want to know which of your readers are signed up to send you stories?
 +br
@@ -45,7 +47,4 @@ div.d If you can see your friends' full names in the list above, they've signed 
 +br
 div.d.u Still something wrong?
 +br
-div.d Reply saying what the problem is, with '#{cmd.sundayHelp}' in your reply &mdash; that means it'll be forwarded to a real person who will investigate.
-+br
-div.d Yours,
-div.d Sunday
+div.d Reply saying what the problem is, with #{cmd.sundayHelp} in your reply &mdash; that means it'll be forwarded to a real person who will investigate.

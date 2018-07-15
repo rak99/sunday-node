@@ -10,5 +10,7 @@ export const boundaries = {
   on_signup: 'Ditch social media and join Sunday',
   on_storyconfirm1: 'Your story for this Sunday is below. It',
   on_storyconfirm2: 'It looks like you currently have no readers of your Sunday stories.',
-  on_sunday: 'You can write a story for next Sunday by',
+  on_sunday1: 'received one story this week, hope you enjoy it',
+  on_sunday2: 'Here are your Sunday stories. Enjoy',
+  on_sunday3: 'If you like the idea of Sunday',
 };

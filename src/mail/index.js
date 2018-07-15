@@ -45,8 +45,8 @@ if (config.testmode) {
     runTests();
   }
   if (config.testoutbound && !config.testinbound) {
-    // sundaySend();
-    reminderSend();
+    sundaySend();
+    // reminderSend();
   }
 }
 
