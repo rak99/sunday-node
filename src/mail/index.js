@@ -45,8 +45,8 @@ if (config.testmode) {
     runTests();
   }
   if (config.testoutbound && !config.testinbound) {
-    sundaySend();
-    // reminderSend();
+    // sundaySend();
+    reminderSend();
   }
 }
 
@@ -57,7 +57,7 @@ const sundaySchedule = schedule.scheduleJob(`0 ${sundayHourOfDay} * * 0`, () => 
   sundaySend();
 });
 
-const reminderSchedule = schedule.scheduleJob(`0 ${sundayHourOfDay} * * 6`, () => {
+const reminderSchedule = schedule.scheduleJob(`0 ${sundayHourOfDay} * * 5`, () => {
   log.info('Reminder send started');
   reminderSend();
 });
