@@ -1,31 +1,83 @@
-import { Router } from 'express';
+import http from 'http';
+import express from 'express';
+import morgan from 'morgan';
 import bodyParser from 'body-parser';
-import mongoose from 'mongoose';
-import { version } from '../../package.json';
-import facets from './facets';
+import cors from 'cors';
+import createError from 'http-errors';
+import initializeDb from './db';
 
 
-export default ({ config, db }) => {
-  const api = Router();
-  // console.log('aaaaaaa');
-  // console.log(facets);
+import log from './log';
+import middleware from './middleware';
+import api from './api/index';
+import config from './config.json';
+import mail from './mail';
+import facets from './api/facets';
+import storyRouter from './db/actions/story';
+import userRouter from './db/actions/user';
 
-  // api.use('/facets', facets({ config, db })); --> in index.js
+const app = express();
+app.server = http.createServer(app);
 
-  // mount the facets resource
+app.use(bodyParser.json());
 
-  // // perhaps expose some API metadata at the root
-  api.get('/', (req, res) => {
-    res.json({ version });
+app.use(bodyParser.urlencoded({ extended: false }));
+
+mail.start();
+
+// // logger
+
+app.use(morgan('dev'));
+
+// // 3rd party middleware
+app.use(
+  cors({
+    exposedHeaders: config.corsHeaders,
+  }),
+);
+
+// app.use(
+//   bodyParser.json({
+//     limit: config.bodyLimit,
+//   }),
+// );
+
+// connect to db
+initializeDb((db) => {
+  // internal middleware
+
+  app.use(middleware({ config, db }));
+  app.use('/users', userRouter({ config, db }));
+  app.use('/stories', storyRouter({ config, db }));
+  app.use('/facets', api({ config, db }));
+  // api router
+
+  app.use('/api', facets({ config, db }));
+
+  // catch 404 and forward to error handler
+  app.use((req, res, next) => {
+    next(createError(404));
   });
 
-  // api.route('/')
-  // .get((req, res, next) => {
-  //   res.statusCode = 200;
-  //   res.setHeader('Content-Type', 'application/json');
-  //   res.json();
-  // });
+  // error handler
+  app.use((err, req, res, next) => {
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // api.use('/facets', facets({ config, db }));
-  return api;
-};
+    // render the error page
+    res.status(err.status || 500);
+    res.json({
+      message: err.message,
+      error: err,
+    });
+  });
+
+  const port = process.env.PORT || 3000;
+
+  app.server.listen(port, () => {
+    log.info(`Started on port ${app.server.address().port}`);
+  });
+});
+
+export default app;
