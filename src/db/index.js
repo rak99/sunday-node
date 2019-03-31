@@ -4,8 +4,12 @@ import config from '../config.json';
 mongoose.Promise = global.Promise;
 
 const options = {
-  useMongoClient: true,
+  reconnectTries: 30,
+  reconnectInterval: 1000,
+  useNewUrlParser: true
 };
+
+mongoose.set('useCreateIndex', true);
 
 mongoose.connect(`mongodb://${config.mlabUsername}:${config.mlabPassword}@ds125183.mlab.com:25183/sundaystories`, options);
 
