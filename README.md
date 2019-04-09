@@ -2,7 +2,10 @@
 
 Run `yarn dev` in Terminal to test
 Run `yarn start` to run
-Run `yarn build` and then `forever start dist` to run remotely
+
+REMOTE
+
+Run `yarn build` and then `pm2 start dist` to run remotely
 
 Add this line to compile pug:
 "pug": "pug -w src/mail/templates -o dist/mail/templates",
