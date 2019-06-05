@@ -46,7 +46,8 @@ if (config.testmode) {
   }
   if (config.testoutbound && !config.testinbound) {
     // sundaySend();
-    reminderSend();
+    // This causes browser to open - commented for now.
+    // reminderSend();
   }
 }
 
@@ -819,6 +820,7 @@ async function processMail(mail) {
               // Set the storyImgFileName correctly
               storyImgFileName = `${cryptoImgId}${idOfEmailer.toString()}.png`;
               // Upload the image
+              // TODO: Look at this for guidance in uploading files through the existing AWS infrastructure.
               await uploadAttachment(outputBuffer, `${storyImgFileName}`);
               confirmMsg = imgMsgs.oneImg;
             } else {

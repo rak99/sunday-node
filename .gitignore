@@ -7,4 +7,5 @@
 /deprecated
 /src/awsconfig.json
 /src/config.json
+/src/SECRET_KEY.js
 sunday.service

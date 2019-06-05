@@ -7,6 +7,7 @@ const storySchema = Schema({
   timeCreated: String,
   weekCommencing: String,
   idOfCreator: String,
+  // Maybe add a ref.
 });
 
 let storyModelName = 'Story';
